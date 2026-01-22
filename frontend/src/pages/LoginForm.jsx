@@ -12,6 +12,8 @@ const LoginForm = () => {
   };
 
   return (
+    <div className='centrar'>
+
     <div className="login-container">
       <div className="login-card">
         <div className="logo-section">
@@ -58,6 +60,7 @@ const LoginForm = () => {
       <div className="footer-note">
         <p>© 2023 Odontología Sonrisas. Todos los derechos reservados.</p>
       </div>
+    </div>
     </div>
   );
 };
