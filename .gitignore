@@ -17,6 +17,9 @@ node_modules\
 *.pdb
 *bin/
 *obj/
+# bin y obj en cualquier proyecto
+**/bin/
+**/obj/
 # 🔹 User-Specific Files
 .vscode/
 .idea/
@@ -68,3 +71,11 @@ TestResults/
 # 🔹 Auto-Generated Files
 *.generated.cs
 .cache/
+Backend/Application/obj/**/
+Backend/Domain/obj/**/
+Backend/Presentation/obj/**/
+Backend/Infrastructure/obj/**/
+Backend/Application/bin/**/
+Backend/Domain/bin/**/
+Backend/Presentation/bin/**/
+Backend/Infrastructure/bin/**/

@@ -17,10 +17,19 @@ import {
   Mail,
   AlertCircle
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/authService';
 
-const Home = () => {
+const Home = ({ setIsAuthenticated }) => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setIsAuthenticated(false);
+    navigate('/login');
+  };
 
   const patients = [
     { id: 1, name: 'María González', lastVisit: '2024-03-10', nextAppointment: '2024-03-25', phone: '+1 234 567 890', email: 'maria@email.com', treatments: 3 },
@@ -399,6 +408,9 @@ const Home = () => {
 
         <div className="sidebar-footer">
           <p className="footer-text">© 2024 DentalCare</p>
+          <button onClick={handleLogout} className="btn-text" style={{ width: '100%', marginTop: '16px' }}>
+            Cerrar sesión
+          </button>
         </div>
       </aside>
 
