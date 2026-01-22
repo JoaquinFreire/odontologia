@@ -1,0 +1,163 @@
+/* LoginForm.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f0f7f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.clinic-name {
+  color: #2a9d8f;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+
+.login-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 40px 35px;
+  width: 100%;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  color: #264653;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-group input {
+  padding: 14px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #2a9d8f;
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+  background-color: white;
+}
+
+.input-group input::placeholder {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.login-button {
+  background-color: #2a9d8f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.login-button:hover {
+  background-color: #21867a;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.login-button:active {
+  transform: translateY(1px);
+}
+
+.login-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.link {
+  color: #2a9d8f;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.link:hover {
+  color: #1d7a6f;
+  text-decoration: underline;
+}
+
+.footer-note {
+  margin-top: 30px;
+  text-align: center;
+  color: #888;
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 30px 25px;
+  }
+  
+  .clinic-name {
+    font-size: 1.5rem;
+  }
+  
+  .login-links {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+}
