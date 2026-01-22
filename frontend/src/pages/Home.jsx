@@ -15,23 +15,51 @@ import {
   User,
   Phone,
   Mail,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  CalendarDays,
+  UserPlus,
+  List
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/authService';
 
-const Home = () => {
+const Home = ({ setIsAuthenticated, user, setUser }) => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    await authService.logout();
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/login');
+  };
+
+  // Obtener fecha actual formateada
+  const obtenerFechaActual = () => {
+    const fecha = new Date();
+    const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return fecha.toLocaleDateString('es-ES', opciones);
+  };
+
+  // Datos de ejemplo
   const patients = [
     { id: 1, name: 'María González', lastVisit: '2024-03-10', nextAppointment: '2024-03-25', phone: '+1 234 567 890', email: 'maria@email.com', treatments: 3 },
     { id: 2, name: 'Carlos Rodríguez', lastVisit: '2024-03-05', nextAppointment: '2024-04-02', phone: '+1 234 567 891', email: 'carlos@email.com', treatments: 2 },
     { id: 3, name: 'Ana Martínez', lastVisit: '2024-02-28', nextAppointment: '2024-03-20', phone: '+1 234 567 892', email: 'ana@email.com', treatments: 5 },
   ];
 
-  const appointments = [
+  const todayAppointments = [
     { id: 1, patient: 'María González', time: '09:00 AM', type: 'Limpieza dental', status: 'confirmado' },
     { id: 2, patient: 'Juan Pérez', time: '10:30 AM', type: 'Extracción', status: 'pendiente' },
     { id: 3, patient: 'Laura Sánchez', time: '02:00 PM', type: 'Consulta', status: 'confirmado' },
+  ];
+
+  const overdueAppointments = [
+    { id: 1, patient: 'Roberto Díaz', date: '2024-03-15', reason: 'Control post-operatorio' },
+    { id: 2, patient: 'Sofía Ramírez', date: '2024-03-18', reason: 'Aplicación de brackets' },
   ];
 
   const treatments = [
@@ -40,114 +68,255 @@ const Home = () => {
     { id: 3, name: 'Implante dental', price: '$80,000', duration: '3-6 meses', category: 'Implantes' },
   ];
 
+  const quickActions = [
+    { id: 1, icon: <PlusCircle size={24} />, label: 'Agendar Turno', color: '#1a237e', onClick: () => alert('Agendar turno') },
+    { id: 2, icon: <UserPlus size={24} />, label: 'Nuevo Paciente', color: '#1976d2', onClick: () => setActiveNav('patients') },
+    { id: 3, icon: <CalendarDays size={24} />, label: 'Ver Agenda', color: '#7b1fa2', onClick: () => setActiveNav('appointments') },
+    { id: 4, icon: <List size={24} />, label: 'Ver Pacientes', color: '#388e3c', onClick: () => setActiveNav('patients') },
+  ];
+
   const renderDashboard = () => (
     <div className="dashboard-content">
+      {/* Header con saludo y fecha */}
       <div className="dashboard-header">
-        <h1>Dashboard</h1>
+        <div>
+          <h1>¡Hola, {user?.name || 'Dr./Dra.'}!</h1>
+          <p style={{ color: '#666', marginTop: '8px', fontSize: '14px' }}>Hoy es {obtenerFechaActual()}</p>
+        </div>
         <div className="header-actions">
-          <button className="btn-primary">
+          <button className="btn-primary" onClick={() => alert('Agendar turno')}>
             <PlusCircle size={18} />
             <span>Agendar turno</span>
           </button>
         </div>
       </div>
 
+      {/* KPI Cards */}
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card kpi-card">
           <div className="stat-icon" style={{ backgroundColor: '#e3f2fd' }}>
-            <Users size={24} color="#1976d2" />
+            <Calendar size={24} color="#1976d2" />
           </div>
           <div className="stat-info">
-            <h3>3</h3>
-            <p>Pacientes registrados</p>
+            <h3>{todayAppointments.length}</h3>
+            <p>Turnos hoy</p>
+            <div className="kpi-subtitle">
+              <span className="kpi-status confirmed">{todayAppointments.filter(a => a.status === 'confirmado').length} confirmados</span>
+              <span className="kpi-status pending">{todayAppointments.filter(a => a.status === 'pendiente').length} pendientes</span>
+            </div>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: '#f3e5f5' }}>
-            <Clock size={24} color="#7b1fa2" />
+        <div className="stat-card kpi-card">
+          <div className="stat-icon" style={{ backgroundColor: '#ffebee' }}>
+            <AlertCircle size={24} color="#d32f2f" />
           </div>
           <div className="stat-info">
-            <h3>0</h3>
-            <p>Turnos este mes</p>
+            <h3>{overdueAppointments.length}</h3>
+            <p>Turnos atrasados</p>
+            <div className="kpi-subtitle">
+              <span className="kpi-status overdue">Requieren atención</span>
+            </div>
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card kpi-card">
           <div className="stat-icon" style={{ backgroundColor: '#e8f5e9' }}>
-            <DollarSign size={24} color="#388e3c" />
+            <CheckCircle size={24} color="#388e3c" />
           </div>
           <div className="stat-info">
-            <h3>$25,000</h3>
-            <p>Por cobrar</p>
-            <span className="stat-subtitle">1 tratamiento</span>
+            <h3>18</h3>
+            <p>Turnos totales</p>
+            <div className="kpi-subtitle">
+              <span className="kpi-status total">Este mes</span>
+            </div>
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card kpi-card">
           <div className="stat-icon" style={{ backgroundColor: '#fff3e0' }}>
-            <FileText size={24} color="#f57c00" />
+            <Users size={24} color="#f57c00" />
           </div>
           <div className="stat-info">
-            <h3>3</h3>
-            <p>Tratamientos realizados</p>
+            <h3>{patients.length}</h3>
+            <p>Pacientes activos</p>
+            <div className="kpi-subtitle">
+              <span className="kpi-status patients">En seguimiento</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="content-grid">
-        <div className="appointments-card">
-          <div className="card-header">
-            <h3>Turnos de hoy</h3>
-            <span className="badge">0 citas programadas</span>
-          </div>
-          <div className="empty-state">
-            <AlertCircle size={48} color="#9e9e9e" />
-            <h4>Sin turnos hoy</h4>
-            <p>No hay citas programadas para hoy</p>
-            <button className="btn-outline">
-              <PlusCircle size={18} />
-              <span>Agendar turno</span>
+      {/* Quick Actions */}
+      <div className="quick-actions-section">
+        <h3 className="section-title">Acciones rápidas</h3>
+        <div className="quick-actions-grid">
+          {quickActions.map(action => (
+            <button key={action.id} className="quick-action-card" onClick={action.onClick}>
+              <div className="quick-action-icon" style={{ backgroundColor: action.color + '15' }}>
+                <div style={{ color: action.color }}>
+                  {action.icon}
+                </div>
+              </div>
+              <span className="quick-action-label">{action.label}</span>
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Contenido principal en grid */}
+      <div className="content-grid">
+        {/* Columna izquierda: Turnos de hoy y agenda */}
+        <div className="left-column">
+          {/* Turnos de hoy */}
+          <div className="appointments-card">
+            <div className="card-header">
+              <h3>Turnos de hoy</h3>
+              <div className="card-header-actions">
+                <span className="badge">{todayAppointments.length} citas programadas</span>
+                <button className="btn-text" onClick={() => setActiveNav('appointments')}>
+                  Ver agenda completa
+                </button>
+              </div>
+            </div>
+            
+            {todayAppointments.length > 0 ? (
+              <div className="today-appointments-list">
+                {todayAppointments.map(app => (
+                  <div key={app.id} className="appointment-item today">
+                    <div className="appointment-time">
+                      <Clock size={16} />
+                      <span>{app.time}</span>
+                    </div>
+                    <div className="appointment-details">
+                      <div className="appointment-patient">
+                        <User size={14} />
+                        <h5>{app.patient}</h5>
+                      </div>
+                      <p>{app.type}</p>
+                    </div>
+                    <span className={`status-badge ${app.status}`}>
+                      {app.status === 'confirmado' ? '✓' : '⏱'} {app.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <AlertCircle size={48} color="#9e9e9e" />
+                <h4>Sin turnos hoy</h4>
+                <p>No hay citas programadas para hoy</p>
+                <button className="btn-outline" onClick={() => alert('Agendar turno')}>
+                  <PlusCircle size={18} />
+                  <span>Agendar turno</span>
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="upcoming-appointments">
-            <h4>Próximos turnos</h4>
-            {appointments.map(app => (
-              <div key={app.id} className="appointment-item">
-                <div className="appointment-time">
-                  <Clock size={16} />
-                  <span>{app.time}</span>
-                </div>
-                <div className="appointment-details">
-                  <h5>{app.patient}</h5>
-                  <p>{app.type}</p>
-                </div>
-                <span className={`status-badge ${app.status}`}>
-                  {app.status}
-                </span>
+          {/* Turnos atrasados */}
+          {overdueAppointments.length > 0 && (
+            <div className="overdue-card">
+              <div className="card-header">
+                <h3>Turnos atrasados</h3>
+                <div className="badge overdue-badge">Requieren atención</div>
               </div>
-            ))}
-          </div>
+              <div className="overdue-list">
+                {overdueAppointments.map(app => (
+                  <div key={app.id} className="overdue-item">
+                    <div className="overdue-info">
+                      <XCircle size={16} color="#d32f2f" />
+                      <div>
+                        <h5>{app.patient}</h5>
+                        <p>Fecha original: {app.date}</p>
+                        <small>Motivo: {app.reason}</small>
+                      </div>
+                    </div>
+                    <button className="btn-outline small" onClick={() => alert(`Reagendar ${app.patient}`)}>
+                      Reagendar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="patients-card">
-          <div className="card-header">
-            <h3>Pacientes recientes</h3>
-            <button className="btn-text">Ver todos</button>
-          </div>
-          {patients.map(patient => (
-            <div key={patient.id} className="patient-item">
-              <div className="patient-avatar">
-                <User size={20} />
+        {/* Columna derecha: Pacientes recientes y acciones */}
+        <div className="right-column">
+          {/* Pacientes recientes */}
+          <div className="patients-card">
+            <div className="card-header">
+              <h3>Pacientes recientes</h3>
+              <div className="card-header-actions">
+                <button className="btn-primary small" onClick={() => alert('Nuevo paciente')}>
+                  <UserPlus size={16} />
+                  <span>Nuevo</span>
+                </button>
+                <button className="btn-text" onClick={() => setActiveNav('patients')}>
+                  Ver todos
+                </button>
               </div>
-              <div className="patient-info">
-                <h5>{patient.name}</h5>
-                <p>Última visita: {patient.lastVisit}</p>
-              </div>
-              <ChevronRight size={20} color="#666" />
             </div>
-          ))}
+            <div className="recent-patients-list">
+              {patients.map(patient => (
+                <div key={patient.id} className="patient-item" onClick={() => alert(`Ver historial de ${patient.name}`)}>
+                  <div className="patient-avatar">
+                    <User size={20} />
+                  </div>
+                  <div className="patient-info">
+                    <h5>{patient.name}</h5>
+                    <div className="patient-details">
+                      <span className="patient-detail">
+                        <Phone size={12} />
+                        {patient.phone}
+                      </span>
+                      <span className="patient-detail">
+                        Última visita: {patient.lastVisit}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} color="#666" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Próximos turnos destacados */}
+          <div className="upcoming-card">
+            <div className="card-header">
+              <h3>Próximos turnos</h3>
+              <button className="btn-text" onClick={() => setActiveNav('appointments')}>
+                Ver todos
+              </button>
+            </div>
+            <div className="upcoming-list">
+              <div className="upcoming-item">
+                <div className="upcoming-date">
+                  <span className="upcoming-day">25</span>
+                  <span className="upcoming-month">MAR</span>
+                </div>
+                <div className="upcoming-info">
+                  <h5>María González</h5>
+                  <p>Control post-tratamiento</p>
+                  <small>10:30 AM</small>
+                </div>
+                <span className="status-badge confirmado">Confirmado</span>
+              </div>
+              <div className="upcoming-item">
+                <div className="upcoming-date">
+                  <span className="upcoming-day">27</span>
+                  <span className="upcoming-month">MAR</span>
+                </div>
+                <div className="upcoming-info">
+                  <h5>Carlos Rodríguez</h5>
+                  <p>Aplicación de brackets</p>
+                  <small>03:00 PM</small>
+                </div>
+                <span className="status-badge confirmado">Confirmado</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -350,7 +519,7 @@ const Home = () => {
         <div className="sidebar-header">
           <div className="logo">
             <div className="logo-icon">🦷</div>
-            <h2>DentalCare</h2>
+            <h2>Odontología</h2>
           </div>
           <p className="clinic-subtitle">Clínica Odontológica</p>
         </div>
@@ -363,7 +532,7 @@ const Home = () => {
             <div className="nav-icon">
               <FileText size={20} />
             </div>
-            <span>Dashboard</span>
+            <span>Inicio</span>
           </button>
 
           <button 
@@ -398,7 +567,19 @@ const Home = () => {
         </nav>
 
         <div className="sidebar-footer">
-          <p className="footer-text">© 2024 DentalCare</p>
+          <div className="user-info">
+            <div className="user-avatar">
+              <User size={20} />
+            </div>
+            <div className="user-details">
+              <span className="user-name">{user?.name || 'Usuario'}</span>
+              <span className="user-role">Odontólogo/a</span>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="btn-text logout-btn">
+            Cerrar sesión
+          </button>
+          <p className="footer-text">© 2024 Odontología</p>
         </div>
       </aside>
 

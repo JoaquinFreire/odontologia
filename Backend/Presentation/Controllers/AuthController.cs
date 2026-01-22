@@ -67,13 +67,28 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public IActionResult GetMe()
     {
-        var email = User.FindFirst(ClaimTypes.Email)?.Value;
-        var name = User.FindFirst(ClaimTypes.Name)?.Value;
-        return Ok(new { 
-            authenticated = true,
-            email = email,
-            name = name
-        });
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var fullName = User.FindFirst(ClaimTypes.Name)?.Value;
+
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
+            {
+                return Unauthorized(new { message = "Usuario no autenticado" });
+            }
+
+            return Ok(new { 
+                authenticated = true,
+                id = userId,
+                email = email,
+                name = fullName
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener datos del usuario" });
+        }
     }
 }
 

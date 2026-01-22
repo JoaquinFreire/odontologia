@@ -1,14 +1,45 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
+import { authService } from '../services/authService';
 
-const LoginForm = () => {
+const LoginForm = ({ setIsAuthenticated, setUser }) => {
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Iniciando sesión con:', { usuario, contrasena });
-    // Aquí iría la lógica real de autenticación
+    setError('');
+    setLoading(true);
+
+    try {
+      console.log('Intentando login con:', usuario);
+      const result = await authService.login(usuario, contrasena);
+      console.log('Login resultado:', result);
+      
+      // Guardar datos del usuario del login response
+      if (result && result.name) {
+        setUser({
+          id: result.id,
+          email: result.email,
+          name: result.name,
+          lastname: result.lastname
+        });
+      }
+      
+      setIsAuthenticated(true);
+      console.log('isAuthenticated seteado a true');
+      
+      // Navegar sin delay
+      navigate('/', { replace: true });
+    } catch (err) {
+      console.error('Error en handleSubmit:', err);
+      setError(err.message || 'Error al iniciar sesión');
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,6 +52,8 @@ const LoginForm = () => {
           
         </div>
         
+        {error && <div className="error-message">{error}</div>}
+        
         <form onSubmit={handleSubmit} className="login-form">
           <div className="input-group">
             <label htmlFor="usuario">Usuario</label>
@@ -29,8 +62,9 @@ const LoginForm = () => {
               id="usuario"
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
-              placeholder="Ingrese su usuario"
+              placeholder="Ingrese su email"
               required
+              disabled={loading}
             />
           </div>
           
@@ -43,11 +77,12 @@ const LoginForm = () => {
               onChange={(e) => setContrasena(e.target.value)}
               placeholder="Ingrese su contraseña"
               required
+              disabled={loading}
             />
           </div>
           
-          <button type="submit" className="login-button">
-            INICIAR SESIÓN
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'INICIANDO SESIÓN...' : 'INICIAR SESIÓN'}
           </button>
         </form>
         
