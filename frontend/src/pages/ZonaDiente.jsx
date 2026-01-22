@@ -1,5 +1,5 @@
 import React from "react";
-import { ESTADOS } from "./estadosOdontograma";
+import { ESTADOS } from "./EstadosOdontograma";
 
 export function Zona({ estado, onClick }) {
   const { color, simbolo } = ESTADOS[estado] || ESTADOS.sano;

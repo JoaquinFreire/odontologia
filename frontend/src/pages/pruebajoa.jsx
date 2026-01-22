@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "../styles/pruebajoa.css";
 import { Diente } from "./ZonaDiente";
-import { ESTADOS } from "./estadosOdontograma";
+import { ESTADOS } from "./EstadosOdontograma";
 
 // genera dientes 11 a 28
 const crearDientes = () => {
