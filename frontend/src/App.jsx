@@ -1,16 +1,18 @@
 import './App.css'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Pruebajoa from "./pages/pruebajoa";
+import LoginForm from './pages/LoginForm';
 
 function App() {
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/pruebajoa" element={<Pruebajoa />} />
-        {/* Puedes agregar más rutas aquí */}
-      </Routes>
-    </Router>
+
+    <LoginForm/>
+    // <Router>
+    //   <Routes>
+    //     <Route path="/pruebajoa" element={<Pruebajoa />} />
+    //     {/* Puedes agregar más rutas aquí */}
+    //   </Routes>
+    // </Router>
   );
 }
 
