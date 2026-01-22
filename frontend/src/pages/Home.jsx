@@ -20,7 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
-const Home = ({ setIsAuthenticated }) => {
+const Home = ({ setIsAuthenticated, user, setUser }) => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
@@ -28,7 +28,15 @@ const Home = ({ setIsAuthenticated }) => {
   const handleLogout = async () => {
     await authService.logout();
     setIsAuthenticated(false);
+    setUser(null);
     navigate('/login');
+  };
+
+  // Obtener fecha actual formateada
+  const obtenerFechaActual = () => {
+    const fecha = new Date();
+    const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return fecha.toLocaleDateString('es-ES', opciones);
   };
 
   const patients = [
@@ -52,7 +60,10 @@ const Home = ({ setIsAuthenticated }) => {
   const renderDashboard = () => (
     <div className="dashboard-content">
       <div className="dashboard-header">
-        <h1>Dashboard</h1>
+        <div>
+          <h1>¡Hola, {user?.name || 'usuario'}!</h1>
+          <p style={{ color: '#666', marginTop: '8px', fontSize: '14px' }}>Hoy es {obtenerFechaActual()}</p>
+        </div>
         <div className="header-actions">
           <button className="btn-primary">
             <PlusCircle size={18} />

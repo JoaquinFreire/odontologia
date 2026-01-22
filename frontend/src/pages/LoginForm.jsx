@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 import { authService } from '../services/authService';
 
-const LoginForm = ({ setIsAuthenticated }) => {
+const LoginForm = ({ setIsAuthenticated, setUser }) => {
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
@@ -20,17 +20,24 @@ const LoginForm = ({ setIsAuthenticated }) => {
       const result = await authService.login(usuario, contrasena);
       console.log('Login resultado:', result);
       
+      // Guardar datos del usuario del login response
+      if (result && result.name) {
+        setUser({
+          id: result.id,
+          email: result.email,
+          name: result.name,
+          lastname: result.lastname
+        });
+      }
+      
       setIsAuthenticated(true);
       console.log('isAuthenticated seteado a true');
       
-      // Esperar un poco antes de navegar
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 100);
+      // Navegar sin delay
+      navigate('/', { replace: true });
     } catch (err) {
       console.error('Error en handleSubmit:', err);
       setError(err.message || 'Error al iniciar sesión');
-    } finally {
       setLoading(false);
     }
   };

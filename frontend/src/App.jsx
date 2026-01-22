@@ -10,6 +10,7 @@ import { authService } from './services/authService';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -18,6 +19,15 @@ function App() {
         const authenticated = await authService.checkAuth();
         console.log('Autenticado:', authenticated);
         setIsAuthenticated(authenticated);
+        
+        if (authenticated) {
+          // Solo obtener usuario si está autenticado
+          const userData = await authService.getUser();
+          console.log('User data:', userData);
+          if (userData) {
+            setUser(userData);
+          }
+        }
       } catch (error) {
         console.error('Error inicial de autenticación:', error);
         setIsAuthenticated(false);
@@ -38,13 +48,13 @@ function App() {
       <Routes>
         <Route 
           path="/login" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <LoginForm setIsAuthenticated={setIsAuthenticated} />} 
+          element={isAuthenticated ? <Navigate to="/" replace /> : <LoginForm setIsAuthenticated={setIsAuthenticated} setUser={setUser} />} 
         />
         <Route 
           path="/" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Home setIsAuthenticated={setIsAuthenticated} />
+              <Home setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
             </ProtectedRoute>
           } 
         />

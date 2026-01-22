@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5057'; // ENV 
+const API_URL = 'http://localhost:5057';
 
 export const authService = {
   login: async (email, password) => {
@@ -32,6 +32,7 @@ export const authService = {
         return { message: 'Login exitoso' };
       }
     } catch (error) {
+      console.error('Error en login:', error);
       throw error;
     }
   },
@@ -63,6 +64,26 @@ export const authService = {
     } catch (error) {
       console.error('Error verificando autenticación:', error);
       return false;
+    }
+  },
+
+  getUser: async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        console.error('Error obteniendo usuario, status:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error obteniendo datos del usuario:', error);
+      return null;
     }
   },
 };
