@@ -21,9 +21,12 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+            return BadRequest(new { message = "Email y contraseña son requeridos" });
+
         var user = await _authService.Login(request.Email, request.Password);
         if (user == null)
-            return Unauthorized("Credenciales inválidas");
+            return Unauthorized(new { message = "Credenciales inválidas" });
 
         var claims = new List<Claim>
         {
@@ -42,7 +45,14 @@ public class AuthController : ControllerBase
             new ClaimsPrincipal(identity)
         );
 
-        return Ok();
+        return Ok(new { 
+            success = true,
+            id = user.id,
+            email = user.email,
+            name = user.name,
+            lastname = user.lastname,
+            message = "Login exitoso"
+        });
     }
 
     [Authorize]
@@ -50,7 +60,20 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync();
-        return Ok();
+        return Ok(new { message = "Logout exitoso" });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult GetMe()
+    {
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+        var name = User.FindFirst(ClaimTypes.Name)?.Value;
+        return Ok(new { 
+            authenticated = true,
+            email = email,
+            name = name
+        });
     }
 }
 
