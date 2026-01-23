@@ -1,5 +1,5 @@
 // Home.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { 
   Calendar,
@@ -24,24 +24,148 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { appointmentService } from '../services/appointmentService';
 
 const Home = ({ setIsAuthenticated, user, setUser }) => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [todayAppointments, setTodayAppointments] = useState([]);
+  const [overdueAppointments, setOverdueAppointments] = useState([]);
+  const [totalPending, setTotalPending] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [markingComplete, setMarkingComplete] = useState(null);
+  const [selectedAppointmentToReschedule, setSelectedAppointmentToReschedule] = useState(null);
+  const [rescheduleData, setRescheduleData] = useState({
+    date: '',
+    time: ''
+  });
   const [formData, setFormData] = useState({
-    patient: '',
+    name: '',
     date: '',
     time: '',
-    type: ''
+    type: '',
+    dni: ''
   });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    loadAllAppointmentData();
+  }, []);
+
+  const loadAllAppointmentData = async () => {
+    try {
+      console.log('Cargando todos los datos de turnos...');
+      
+      const [today, overdue, total] = await Promise.all([
+        appointmentService.getTodayAppointments(),
+        appointmentService.getOverdueAppointments(),
+        appointmentService.getTotalPendingAppointments()
+      ]);
+
+      setTodayAppointments(today);
+      setOverdueAppointments(overdue);
+      setTotalPending(total);
+
+      console.log('Turnos de hoy:', today);
+      console.log('Turnos atrasados:', overdue);
+      console.log('Total pendientes:', total);
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+    }
+  };
 
   const handleLogout = async () => {
     await authService.logout();
     setIsAuthenticated(false);
     setUser(null);
     navigate('/login');
+  };
+
+  const handleMarkAsCompleted = async (id) => {
+    try {
+      setMarkingComplete(id);
+      console.log('Marcando turno como atendido:', id);
+
+      await appointmentService.markAppointmentAsCompleted(id);
+      
+      console.log('Turno marcado exitosamente');
+      alert('✓ Turno marcado como atendido');
+      
+      await loadAllAppointmentData();
+    } catch (error) {
+      console.error('Error al marcar turno:', error);
+      alert(`✗ Error: ${error.message}`);
+    } finally {
+      setMarkingComplete(null);
+    }
+  };
+
+  const handleOpenRescheduleModal = (appointment) => {
+    console.log('Abriendo modal de reprogramación para:', appointment);
+    setSelectedAppointmentToReschedule(appointment);
+    
+    // Obtener fecha y hora actual del turno
+    const appointmentDate = new Date(appointment.datetime);
+    const dateString = appointmentDate.toISOString().split('T')[0];
+    const timeString = appointmentDate.toTimeString().slice(0, 5);
+    
+    setRescheduleData({
+      date: dateString,
+      time: timeString
+    });
+    
+    setShowRescheduleModal(true);
+  };
+
+  const handleCloseRescheduleModal = () => {
+    setShowRescheduleModal(false);
+    setSelectedAppointmentToReschedule(null);
+    setRescheduleData({
+      date: '',
+      time: ''
+    });
+  };
+
+  const handleRescheduleChange = (e) => {
+    const { name, value } = e.target;
+    setRescheduleData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitReschedule = async (e) => {
+    e.preventDefault();
+    
+    if (!rescheduleData.date || !rescheduleData.time) {
+      alert('Por favor completa la fecha y hora');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log('=== REPROGRAMANDO TURNO ===');
+      console.log('ID del turno:', selectedAppointmentToReschedule.id);
+      console.log('Nueva fecha y hora:', rescheduleData);
+
+      await appointmentService.updateAppointment(selectedAppointmentToReschedule.id, {
+        date: rescheduleData.date,
+        time: rescheduleData.time
+      });
+      
+      alert('✓ Turno reprogramado exitosamente');
+      handleCloseRescheduleModal();
+      
+      await loadAllAppointmentData();
+    } catch (error) {
+      console.error('Error al reprogramar turno:', error);
+      alert(`✗ Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOpenModal = () => {
@@ -51,10 +175,11 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setFormData({
-      patient: '',
+      name: '',
       date: '',
       time: '',
-      type: ''
+      type: '',
+      dni: ''
     });
   };
 
@@ -66,39 +191,44 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
     }));
   };
 
-  const handleSubmitAppointment = (e) => {
+  const handleSubmitAppointment = async (e) => {
     e.preventDefault();
-    if (formData.patient && formData.date && formData.time && formData.type) {
-      alert(`Turno agendado para ${formData.patient} el ${formData.date} a las ${formData.time}`);
+    
+    if (!formData.name || !formData.date || !formData.time || !formData.type) {
+      alert('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log('=== ENVIANDO TURNO ===');
+      console.log('Form data:', formData);
+
+      await appointmentService.createAppointment(formData);
+      
+      alert(`✓ Turno agendado para ${formData.name} el ${formData.date} a las ${formData.time}`);
       handleCloseModal();
-    } else {
-      alert('Por favor completa todos los campos');
+      
+      await loadAllAppointmentData();
+    } catch (error) {
+      console.error('Error al crear turno:', error);
+      alert(`✗ Error: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Obtener fecha actual formateada
   const obtenerFechaActual = () => {
     const fecha = new Date();
     const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return fecha.toLocaleDateString('es-ES', opciones);
   };
 
-  // Datos de ejemplo
   const patients = [
     { id: 1, name: 'María González', lastVisit: '2024-03-10', nextAppointment: '2024-03-25', phone: '+1 234 567 890', email: 'maria@email.com', treatments: 3 },
     { id: 2, name: 'Carlos Rodríguez', lastVisit: '2024-03-05', nextAppointment: '2024-04-02', phone: '+1 234 567 891', email: 'carlos@email.com', treatments: 2 },
     { id: 3, name: 'Ana Martínez', lastVisit: '2024-02-28', nextAppointment: '2024-03-20', phone: '+1 234 567 892', email: 'ana@email.com', treatments: 5 },
-  ];
-
-  const todayAppointments = [
-    { id: 1, patient: 'María González', time: '09:00 AM', type: 'Limpieza dental', status: 'confirmado' },
-    { id: 2, patient: 'Juan Pérez', time: '10:30 AM', type: 'Extracción', status: 'pendiente' },
-    { id: 3, patient: 'Laura Sánchez', time: '02:00 PM', type: 'Consulta', status: 'confirmado' },
-  ];
-
-  const overdueAppointments = [
-    { id: 1, patient: 'Roberto Díaz', date: '2024-03-15', reason: 'Control post-operatorio' },
-    { id: 2, patient: 'Sofía Ramírez', date: '2024-03-18', reason: 'Aplicación de brackets' },
   ];
 
   const treatments = [
@@ -113,6 +243,11 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
     { id: 3, icon: <CalendarDays size={24} />, label: 'Ver Agenda', color: '#7b1fa2', onClick: () => setActiveNav('appointments') },
     { id: 4, icon: <List size={24} />, label: 'Ver Pacientes', color: '#388e3c', onClick: () => setActiveNav('patients') },
   ];
+
+  const formatAppointmentName = (appointment) => {
+    const dniText = appointment.dni ? appointment.dni : '(sin DNI)';
+    return `${appointment.name} - ${dniText}`;
+  };
 
   const renderDashboard = () => (
     <div className="dashboard-content">
@@ -130,7 +265,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - ACTUALIZADOS CON DATOS DE LA BD */}
       <div className="stats-grid">
         <div className="stat-card kpi-card">
           <div className="stat-icon" style={{ backgroundColor: '#e3f2fd' }}>
@@ -139,7 +274,9 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
           <div className="stat-info">
             <h3>{todayAppointments.length}</h3>
             <p>Turnos hoy</p>
-            
+            <div className="kpi-subtitle">
+              <span className="kpi-status confirmed">{todayAppointments.length} pendientes</span>
+            </div>
           </div>
         </div>
 
@@ -150,7 +287,9 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
           <div className="stat-info">
             <h3>{overdueAppointments.length}</h3>
             <p>Turnos atrasados</p>
-            
+            <div className="kpi-subtitle">
+              <span className="kpi-status overdue">Requieren atención</span>
+            </div>
           </div>
         </div>
 
@@ -159,9 +298,11 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
             <CheckCircle size={24} color="#388e3c" />
           </div>
           <div className="stat-info">
-            <h3>18</h3>
-            <p>Turnos totales</p>
-            
+            <h3>{totalPending}</h3>
+            <p>Turnos pendientes</p>
+            <div className="kpi-subtitle">
+              <span className="kpi-status total">Total en el sistema</span>
+            </div>
           </div>
         </div>
       </div>
@@ -193,9 +334,6 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
               <h3>Turnos de hoy</h3>
               <div className="card-header-actions">
                 <span className="badge">{todayAppointments.length} citas programadas</span>
-                <button className="btn-text" onClick={() => setActiveNav('appointments')}>
-                  Ver agenda completa
-                </button>
               </div>
             </div>
             
@@ -205,18 +343,30 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                   <div key={app.id} className="appointment-item today">
                     <div className="appointment-time">
                       <Clock size={16} />
-                      <span>{app.time}</span>
+                      <span>{new Date(app.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div className="appointment-details">
                       <div className="appointment-patient">
                         <User size={14} />
-                        <h5>{app.patient}</h5>
+                        <h5>{formatAppointmentName(app)}</h5>
                       </div>
                       <p>{app.type}</p>
                     </div>
-                    <span className={`status-badge ${app.status}`}>
-                      {app.status === 'confirmado' ? '✓' : '⏱'} {app.status}
-                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        className="btn-outline small"
+                        onClick={() => handleMarkAsCompleted(app.id)}
+                        disabled={markingComplete === app.id}
+                      >
+                        {markingComplete === app.id ? 'Marcando...' : 'Marcar atendido'}
+                      </button>
+                      <button 
+                        className="btn-outline small"
+                        onClick={() => handleOpenRescheduleModal(app)}
+                      >
+                        Reprogramar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -246,14 +396,28 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                     <div className="overdue-info">
                       <XCircle size={16} color="#d32f2f" />
                       <div>
-                        <h5>{app.patient}</h5>
-                        <p>Fecha original: {app.date}</p>
-                        <small>Motivo: {app.reason}</small>
+                        <h5>{formatAppointmentName(app)}</h5>
+                        <p>Fecha original: {new Date(app.datetime).toLocaleDateString('es-ES')} &nbsp;
+                          <span>{new Date(app.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </p>
+                        <small>Tratamiento: {app.type}</small>
                       </div>
                     </div>
-                    <button className="btn-outline small" onClick={() => alert(`Reagendar ${app.patient}`)}>
-                      Reagendar
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                      <button 
+                        className="btn-outline small"
+                        onClick={() => handleMarkAsCompleted(app.id)}
+                        disabled={markingComplete === app.id}
+                      >
+                        {markingComplete === app.id ? 'Marcando...' : 'Marcar atendido'}
+                      </button>
+                      <button 
+                        className="btn-outline small"
+                        onClick={() => handleOpenRescheduleModal(app)}
+                      >
+                        Reprogramar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -261,40 +425,21 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
           )}
         </div>
 
-        {/* Columna derecha: Pacientes recientes y acciones */}
+        {/* Columna derecha */}
         <div className="right-column">
-          {/* Próximos turnos destacados */}
           <div className="upcoming-card">
             <div className="card-header">
-              <h3>Próximos turnos</h3>
-              <button className="btn-text" onClick={() => setActiveNav('appointments')}>
-                Ver todos
-              </button>
+              <h3>Resumen de turnos</h3>
             </div>
-            <div className="upcoming-list">
-              <div className="upcoming-item">
-                <div className="upcoming-date">
-                  <span className="upcoming-day">25</span>
-                  <span className="upcoming-month">MAR</span>
-                </div>
-                <div className="upcoming-info">
-                  <h5>María González</h5>
-                  <p>Control post-tratamiento</p>
-                  <small>10:30 AM</small>
-                </div>
-                <span className="status-badge confirmado">Confirmado</span>
+            <div style={{ padding: '15px' }}>
+              <div style={{ marginBottom: '15px' }}>
+                <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>Total pendientes en el sistema: <strong>{totalPending}</strong></p>
               </div>
-              <div className="upcoming-item">
-                <div className="upcoming-date">
-                  <span className="upcoming-day">27</span>
-                  <span className="upcoming-month">MAR</span>
-                </div>
-                <div className="upcoming-info">
-                  <h5>Carlos Rodríguez</h5>
-                  <p>Aplicación de brackets</p>
-                  <small>03:00 PM</small>
-                </div>
-                <span className="status-badge confirmado">Confirmado</span>
+              <div style={{ marginBottom: '15px' }}>
+                <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>Programados para hoy: <strong>{todayAppointments.length}</strong></p>
+              </div>
+              <div>
+                <p style={{ margin: 0, color: '#d32f2f', fontSize: '14px' }}>Turnos atrasados: <strong>{overdueAppointments.length}</strong></p>
               </div>
             </div>
           </div>
@@ -584,27 +729,34 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
             
             <form className="appointment-form" onSubmit={handleSubmitAppointment}>
               <div className="form-group">
-                <label htmlFor="patient">Nombre completo</label>
-                <input type="text" />
-
-                <label htmlFor="patient">Documento</label>
-                <input type="number" />
-                {/* <select 
-                  id="patient"
-                  name="patient" 
-                  value={formData.patient}
+                <label htmlFor="name">Nombre completo *</label>
+                <input 
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
                   onChange={handleFormChange}
+                  placeholder="Ej: María González"
                   required
-                >
-                  <option value="">Seleccionar paciente...</option>
-                  <option value="María González">María González</option>
-                  <option value="Carlos Rodríguez">Carlos Rodríguez</option>
-                  <option value="Ana Martínez">Ana Martínez</option>
-                </select> */}
+                  disabled={loading}
+                />
               </div>
 
               <div className="form-group">
-                <label htmlFor="date">Fecha</label>
+                <label htmlFor="dni">DNI (Opcional)</label>
+                <input 
+                  type="number"
+                  id="dni"
+                  name="dni"
+                  value={formData.dni}
+                  onChange={handleFormChange}
+                  placeholder="Ej: 12345678"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="date">Fecha *</label>
                 <input 
                   type="date" 
                   id="date"
@@ -612,11 +764,12 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                   value={formData.date}
                   onChange={handleFormChange}
                   required
+                  disabled={loading}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="time">Hora</label>
+                <label htmlFor="time">Hora *</label>
                 <input 
                   type="time" 
                   id="time"
@@ -624,33 +777,108 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                   value={formData.time}
                   onChange={handleFormChange}
                   required
+                  disabled={loading}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="type">Tipo de Tratamiento</label>
+                <label htmlFor="type">Tipo de Tratamiento *</label>
                 <select 
                   id="type"
                   name="type"
                   value={formData.type}
                   onChange={handleFormChange}
                   required
+                  disabled={loading}
                 >
                   <option value="">Seleccionar tratamiento...</option>
+                  <option value="Consulta">Consulta</option>
                   <option value="Limpieza dental">Limpieza dental</option>
                   <option value="Extracción">Extracción</option>
-                  <option value="Consulta">Consulta</option>
                   <option value="Blanqueamiento">Blanqueamiento</option>
                   <option value="Ortodoncia">Ortodoncia</option>
+                  <option value="Implante dental">Implante dental</option>
+                  <option value="Otro">Otro</option>
                 </select>
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-outline" onClick={handleCloseModal}>
+                <button type="button" className="btn-outline" onClick={handleCloseModal} disabled={loading}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
-                  Agendar Turno
+                <button type="submit" className="btn-primary" disabled={loading}>
+                  {loading ? 'Agendando...' : 'Agendar Turno'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Reprogramar Turno */}
+      {showRescheduleModal && selectedAppointmentToReschedule && (
+        <div className="modal-overlay" onClick={handleCloseRescheduleModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Reprogramar Turno</h2>
+              <button className="modal-close" onClick={handleCloseRescheduleModal}>
+                <span>&times;</span>
+              </button>
+            </div>
+            
+            <form className="appointment-form" onSubmit={handleSubmitReschedule}>
+              <div className="form-group">
+                <label>Información del turno</label>
+                <div style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  marginBottom: '15px'
+                }}>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                    <strong>Paciente:</strong> {formatAppointmentName(selectedAppointmentToReschedule)}
+                  </p>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                    <strong>Tratamiento:</strong> {selectedAppointmentToReschedule.type}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '14px' }}>
+                    <strong>Fecha actual:</strong> {new Date(selectedAppointmentToReschedule.datetime).toLocaleDateString('es-ES')} a las {new Date(selectedAppointmentToReschedule.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="reschedule-date">Nueva Fecha *</label>
+                <input 
+                  type="date" 
+                  id="reschedule-date"
+                  name="date"
+                  value={rescheduleData.date}
+                  onChange={handleRescheduleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="reschedule-time">Nueva Hora *</label>
+                <input 
+                  type="time" 
+                  id="reschedule-time"
+                  name="time"
+                  value={rescheduleData.time}
+                  onChange={handleRescheduleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-outline" onClick={handleCloseRescheduleModal} disabled={loading}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={loading}>
+                  {loading ? 'Reprogramando...' : 'Confirmar Reprogramación'}
                 </button>
               </div>
             </form>
