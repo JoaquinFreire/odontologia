@@ -14,7 +14,7 @@ import {
   List
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+// import { authService } from '../services/authService';
 import NavBar from '../components/NavBar';
 
 import { appointmentService } from '../services/appointmentService';
@@ -29,6 +29,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
   const [loading, setLoading] = useState(false);
   const [markingComplete, setMarkingComplete] = useState(null);
   const [selectedAppointmentToReschedule, setSelectedAppointmentToReschedule] = useState(null);
+  const [activeNav, setActiveNav] = useState('dashboard');
   const [rescheduleData, setRescheduleData] = useState({
     date: '',
     time: ''
@@ -41,6 +42,12 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
     dni: ''
   });
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/login');
+  };
 
   const loadAllAppointmentData = async () => {
     try {
@@ -228,9 +235,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
         setActiveNav={setActiveNav}
         user={user}
         handleLogout={handleLogout}
-
       />
-
       <main className="main-content">
         <div className="dashboard-content">
           {/* Header con saludo y fecha */}

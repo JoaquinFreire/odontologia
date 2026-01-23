@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { Settings, Save } from 'lucide-react';
-import Navigation from '../components/Navigation';
+import NavBar from '../components/NavBar';
 import { supabase } from '../config/supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
 const Configuration = ({ setIsAuthenticated, user, setUser }) => {
   const [formData, setFormData] = useState({
@@ -11,10 +12,11 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
     lastname: '',
     tuition: ''
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);  
   const [originalData, setOriginalData] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [activeNav, setActiveNav] = useState('dashboard');
 
   useEffect(() => {
     loadUserData();
@@ -62,6 +64,12 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
       setMessage('Error al cargar los datos');
       setMessageType('error');
     }
+  };
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/login');
   };
 
   const handleChange = (e) => {
@@ -131,10 +139,11 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
 
   return (
     <div className="app">
-      <Navigation 
+      <NavBar
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
         user={user}
-        setIsAuthenticated={setIsAuthenticated}
-        setUser={setUser}
+        handleLogout={handleLogout}
       />
 
       <main className="main-content">
@@ -173,18 +182,18 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
               {/* Nombre - Solo lectura */}
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ fontWeight: 'bold' }}>Nombre:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={formData.name}
                   readOnly
-                  style={{ 
-                    width: '100%', 
-                    padding: '8px', 
-                    marginTop: '5px', 
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginTop: '5px',
                     boxSizing: 'border-box',
                     backgroundColor: '#e8e8e8',
                     cursor: 'not-allowed'
-                  }} 
+                  }}
                 />
                 <small style={{ color: '#999' }}>Este campo no puede modificarse</small>
               </div>
@@ -192,18 +201,18 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
               {/* Apellido - Solo lectura */}
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ fontWeight: 'bold' }}>Apellido:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={formData.lastname}
                   readOnly
-                  style={{ 
-                    width: '100%', 
-                    padding: '8px', 
-                    marginTop: '5px', 
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginTop: '5px',
                     boxSizing: 'border-box',
                     backgroundColor: '#e8e8e8',
                     cursor: 'not-allowed'
-                  }} 
+                  }}
                 />
                 <small style={{ color: '#999' }}>Este campo no puede modificarse</small>
               </div>
@@ -211,45 +220,45 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
               {/* Email - Editable */}
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ fontWeight: 'bold' }}>Email:</label>
-                <input 
+                <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  style={{ 
-                    width: '100%', 
-                    padding: '8px', 
-                    marginTop: '5px', 
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginTop: '5px',
                     boxSizing: 'border-box',
                     border: '1px solid #ddd',
                     borderRadius: '4px'
-                  }} 
+                  }}
                 />
               </div>
 
               {/* Matrícula - Editable */}
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ fontWeight: 'bold' }}>Matrícula:</label>
-                <input 
+                <input
                   type="text"
                   name="tuition"
                   value={formData.tuition}
                   onChange={handleChange}
                   placeholder="Ingrese su número de matrícula"
-                  style={{ 
-                    width: '100%', 
-                    padding: '8px', 
-                    marginTop: '5px', 
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginTop: '5px',
                     boxSizing: 'border-box',
                     border: '1px solid #ddd',
                     borderRadius: '4px'
-                  }} 
+                  }}
                 />
               </div>
 
-              <button 
-                type="submit" 
-                className="btn-primary" 
+              <button
+                type="submit"
+                className="btn-primary"
                 style={{ marginTop: '20px' }}
                 disabled={loading || !hasChanges()}
               >

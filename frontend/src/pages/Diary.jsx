@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../App.css';
 import { Filter, PlusCircle } from 'lucide-react';
-import Navigation from '../components/Navigation';
+import NavBar from '../components/NavBar';
 import { appointmentService } from '../services/appointmentService';
+import { useNavigate } from 'react-router-dom';
 
 const Diary = ({ setIsAuthenticated, user, setUser }) => {
   useEffect(() => {
@@ -16,15 +17,22 @@ const Diary = ({ setIsAuthenticated, user, setUser }) => {
 
     loadAppointments();
   }, []);
+  const [activeNav, setActiveNav] = useState('dashboard');
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/login');
+  };
 
   return (
     <div className="app">
-      <Navigation 
+      <NavBar
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
         user={user}
-        setIsAuthenticated={setIsAuthenticated}
-        setUser={setUser}
+        handleLogout={handleLogout}
       />
-
       <main className="main-content">
         <div className="appointments-content">
           <div className="content-header">
@@ -50,7 +58,7 @@ const Diary = ({ setIsAuthenticated, user, setUser }) => {
                 <button className="btn-icon">›</button>
               </div>
             </div>
-            
+
             <div className="week-days">
               {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
                 <div key={day} className="week-day">{day}</div>
