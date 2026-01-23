@@ -16,12 +16,12 @@ function App() {
     const checkAuth = async () => {
       try {
         console.log('Verificando autenticación inicial...');
+        
         const authenticated = await authService.checkAuth();
         console.log('Autenticado:', authenticated);
         setIsAuthenticated(authenticated);
         
         if (authenticated) {
-          // Solo obtener usuario si está autenticado
           const userData = await authService.getUser();
           console.log('User data:', userData);
           if (userData) {
