@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import Pruebajoa from "./pages/pruebajoa";
 import LoginForm from './pages/LoginForm';
 import Home from './pages/Home';
+import Diary from './pages/Diary';
+import NewPatient from './pages/NewPatient';
+import Configuration from './pages/Configuration';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/authService';
 
@@ -55,6 +58,38 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Home setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/diary" 
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Diary setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/patients" 
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Diary setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/newpatient" 
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <NewPatient setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/configuration" 
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Configuration setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
             </ProtectedRoute>
           } 
         />
