@@ -14,8 +14,11 @@ import {
   List
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Navigation from '../components/Navigation';
+import { authService } from '../services/authService';
+import NavBar from '../components/NavBar';
+
 import { appointmentService } from '../services/appointmentService';
+
 
 const Home = ({ setIsAuthenticated, user, setUser }) => {
   const [showModal, setShowModal] = useState(false);
@@ -71,10 +74,10 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
       console.log('Marcando turno como atendido:', id);
 
       await appointmentService.markAppointmentAsCompleted(id);
-      
+
       console.log('Turno marcado exitosamente');
       alert('✓ Turno marcado como atendido');
-      
+
       await loadAllAppointmentData();
     } catch (error) {
       console.error('Error al marcar turno:', error);
@@ -87,16 +90,16 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
   const handleOpenRescheduleModal = (appointment) => {
     console.log('Abriendo modal de reprogramación para:', appointment);
     setSelectedAppointmentToReschedule(appointment);
-    
+
     const appointmentDate = new Date(appointment.datetime);
     const dateString = appointmentDate.toISOString().split('T')[0];
     const timeString = appointmentDate.toTimeString().slice(0, 5);
-    
+
     setRescheduleData({
       date: dateString,
       time: timeString
     });
-    
+
     setShowRescheduleModal(true);
   };
 
@@ -119,7 +122,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
   const handleSubmitReschedule = async (e) => {
     e.preventDefault();
-    
+
     if (!rescheduleData.date || !rescheduleData.time) {
       alert('Por favor completa la fecha y hora');
       return;
@@ -136,10 +139,10 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
         date: rescheduleData.date,
         time: rescheduleData.time
       });
-      
+
       alert('✓ Turno reprogramado exitosamente');
       handleCloseRescheduleModal();
-      
+
       await loadAllAppointmentData();
     } catch (error) {
       console.error('Error al reprogramar turno:', error);
@@ -174,7 +177,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
   const handleSubmitAppointment = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.date || !formData.time || !formData.type) {
       alert('Por favor completa todos los campos obligatorios');
       return;
@@ -187,10 +190,10 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
       console.log('Form data:', formData);
 
       await appointmentService.createAppointment(formData);
-      
+
       alert(`✓ Turno agendado para ${formData.name} el ${formData.date} a las ${formData.time}`);
       handleCloseModal();
-      
+
       await loadAllAppointmentData();
     } catch (error) {
       console.error('Error al crear turno:', error);
@@ -220,10 +223,12 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
   return (
     <div className="app">
-      <Navigation 
+      <NavBar
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
         user={user}
-        setIsAuthenticated={setIsAuthenticated}
-        setUser={setUser}
+        handleLogout={handleLogout}
+
       />
 
       <main className="main-content">
@@ -313,7 +318,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                     <span className="badge">{todayAppointments.length} citas programadas</span>
                   </div>
                 </div>
-                
+
                 {todayAppointments.length > 0 ? (
                   <div className="today-appointments-list">
                     {todayAppointments.map(app => (
@@ -330,14 +335,14 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                           <p>{app.type}</p>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <button 
+                          <button
                             className="btn-outline small"
                             onClick={() => handleMarkAsCompleted(app.id)}
                             disabled={markingComplete === app.id}
                           >
                             {markingComplete === app.id ? 'Marcando...' : 'Marcar atendido'}
                           </button>
-                          <button 
+                          <button
                             className="btn-outline small"
                             onClick={() => handleOpenRescheduleModal(app)}
                           >
@@ -381,14 +386,14 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-                          <button 
+                          <button
                             className="btn-outline small"
                             onClick={() => handleMarkAsCompleted(app.id)}
                             disabled={markingComplete === app.id}
                           >
                             {markingComplete === app.id ? 'Marcando...' : 'Marcar atendido'}
                           </button>
-                          <button 
+                          <button
                             className="btn-outline small"
                             onClick={() => handleOpenRescheduleModal(app)}
                           >
@@ -435,11 +440,11 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                 <span>&times;</span>
               </button>
             </div>
-            
+
             <form className="appointment-form" onSubmit={handleSubmitAppointment}>
               <div className="form-group">
                 <label htmlFor="name">Nombre completo *</label>
-                <input 
+                <input
                   type="text"
                   id="name"
                   name="name"
@@ -453,7 +458,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
               <div className="form-group">
                 <label htmlFor="dni">DNI (Opcional)</label>
-                <input 
+                <input
                   type="number"
                   id="dni"
                   name="dni"
@@ -466,8 +471,8 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
               <div className="form-group">
                 <label htmlFor="date">Fecha *</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   id="date"
                   name="date"
                   value={formData.date}
@@ -479,8 +484,8 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
               <div className="form-group">
                 <label htmlFor="time">Hora *</label>
-                <input 
-                  type="time" 
+                <input
+                  type="time"
                   id="time"
                   name="time"
                   value={formData.time}
@@ -492,7 +497,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
               <div className="form-group">
                 <label htmlFor="type">Tipo de Tratamiento *</label>
-                <select 
+                <select
                   id="type"
                   name="type"
                   value={formData.type}
@@ -534,7 +539,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                 <span>&times;</span>
               </button>
             </div>
-            
+
             <form className="appointment-form" onSubmit={handleSubmitReschedule}>
               <div className="form-group">
                 <label>Información del turno</label>
@@ -558,8 +563,8 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
               <div className="form-group">
                 <label htmlFor="reschedule-date">Nueva Fecha *</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   id="reschedule-date"
                   name="date"
                   value={rescheduleData.date}
@@ -571,8 +576,8 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
               <div className="form-group">
                 <label htmlFor="reschedule-time">Nueva Hora *</label>
-                <input 
-                  type="time" 
+                <input
+                  type="time"
                   id="reschedule-time"
                   name="time"
                   value={rescheduleData.time}
