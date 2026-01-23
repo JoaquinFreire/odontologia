@@ -28,6 +28,13 @@ import { authService } from '../services/authService';
 const Home = ({ setIsAuthenticated, user, setUser }) => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    patient: '',
+    date: '',
+    time: '',
+    type: ''
+  });
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -35,6 +42,38 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
     setIsAuthenticated(false);
     setUser(null);
     navigate('/login');
+  };
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setFormData({
+      patient: '',
+      date: '',
+      time: '',
+      type: ''
+    });
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitAppointment = (e) => {
+    e.preventDefault();
+    if (formData.patient && formData.date && formData.time && formData.type) {
+      alert(`Turno agendado para ${formData.patient} el ${formData.date} a las ${formData.time}`);
+      handleCloseModal();
+    } else {
+      alert('Por favor completa todos los campos');
+    }
   };
 
   // Obtener fecha actual formateada
@@ -69,7 +108,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
   ];
 
   const quickActions = [
-    { id: 1, icon: <PlusCircle size={24} />, label: 'Agendar Turno', color: '#1a237e', onClick: () => alert('Agendar turno') },
+    { id: 1, icon: <PlusCircle size={24} />, label: 'Agendar Turno', color: '#1a237e', onClick: handleOpenModal },
     { id: 2, icon: <UserPlus size={24} />, label: 'Nuevo Paciente', color: '#1976d2', onClick: () => setActiveNav('patients') },
     { id: 3, icon: <CalendarDays size={24} />, label: 'Ver Agenda', color: '#7b1fa2', onClick: () => setActiveNav('appointments') },
     { id: 4, icon: <List size={24} />, label: 'Ver Pacientes', color: '#388e3c', onClick: () => setActiveNav('patients') },
@@ -84,7 +123,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
           <p style={{ color: '#666', marginTop: '8px', fontSize: '14px' }}>Hoy es {obtenerFechaActual()}</p>
         </div>
         <div className="header-actions">
-          <button className="btn-primary" onClick={() => alert('Agendar turno')}>
+          <button className="btn-primary" onClick={handleOpenModal}>
             <PlusCircle size={18} />
             <span>Agendar turno</span>
           </button>
@@ -100,10 +139,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
           <div className="stat-info">
             <h3>{todayAppointments.length}</h3>
             <p>Turnos hoy</p>
-            <div className="kpi-subtitle">
-              <span className="kpi-status confirmed">{todayAppointments.filter(a => a.status === 'confirmado').length} confirmados</span>
-              <span className="kpi-status pending">{todayAppointments.filter(a => a.status === 'pendiente').length} pendientes</span>
-            </div>
+            
           </div>
         </div>
 
@@ -114,9 +150,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
           <div className="stat-info">
             <h3>{overdueAppointments.length}</h3>
             <p>Turnos atrasados</p>
-            <div className="kpi-subtitle">
-              <span className="kpi-status overdue">Requieren atención</span>
-            </div>
+            
           </div>
         </div>
 
@@ -127,22 +161,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
           <div className="stat-info">
             <h3>18</h3>
             <p>Turnos totales</p>
-            <div className="kpi-subtitle">
-              <span className="kpi-status total">Este mes</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card kpi-card">
-          <div className="stat-icon" style={{ backgroundColor: '#fff3e0' }}>
-            <Users size={24} color="#f57c00" />
-          </div>
-          <div className="stat-info">
-            <h3>{patients.length}</h3>
-            <p>Pacientes activos</p>
-            <div className="kpi-subtitle">
-              <span className="kpi-status patients">En seguimiento</span>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -206,7 +225,7 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
                 <AlertCircle size={48} color="#9e9e9e" />
                 <h4>Sin turnos hoy</h4>
                 <p>No hay citas programadas para hoy</p>
-                <button className="btn-outline" onClick={() => alert('Agendar turno')}>
+                <button className="btn-outline" onClick={handleOpenModal}>
                   <PlusCircle size={18} />
                   <span>Agendar turno</span>
                 </button>
@@ -244,44 +263,6 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
 
         {/* Columna derecha: Pacientes recientes y acciones */}
         <div className="right-column">
-          {/* Pacientes recientes */}
-          <div className="patients-card">
-            <div className="card-header">
-              <h3>Pacientes recientes</h3>
-              <div className="card-header-actions">
-                <button className="btn-primary small" onClick={() => alert('Nuevo paciente')}>
-                  <UserPlus size={16} />
-                  <span>Nuevo</span>
-                </button>
-                <button className="btn-text" onClick={() => setActiveNav('patients')}>
-                  Ver todos
-                </button>
-              </div>
-            </div>
-            <div className="recent-patients-list">
-              {patients.map(patient => (
-                <div key={patient.id} className="patient-item" onClick={() => alert(`Ver historial de ${patient.name}`)}>
-                  <div className="patient-avatar">
-                    <User size={20} />
-                  </div>
-                  <div className="patient-info">
-                    <h5>{patient.name}</h5>
-                    <div className="patient-details">
-                      <span className="patient-detail">
-                        <Phone size={12} />
-                        {patient.phone}
-                      </span>
-                      <span className="patient-detail">
-                        Última visita: {patient.lastVisit}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight size={20} color="#666" />
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Próximos turnos destacados */}
           <div className="upcoming-card">
             <div className="card-header">
@@ -589,6 +570,93 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
         {activeNav === 'appointments' && renderAppointments()}
         {activeNav === 'treatments' && renderTreatments()}
       </main>
+
+      {/* Modal Agendar Turno */}
+      {showModal && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Agendar Nuevo Turno</h2>
+              <button className="modal-close" onClick={handleCloseModal}>
+                <span>&times;</span>
+              </button>
+            </div>
+            
+            <form className="appointment-form" onSubmit={handleSubmitAppointment}>
+              <div className="form-group">
+                <label htmlFor="patient">Nombre completo</label>
+                <input type="text" />
+
+                <label htmlFor="patient">Documento</label>
+                <input type="number" />
+                {/* <select 
+                  id="patient"
+                  name="patient" 
+                  value={formData.patient}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="">Seleccionar paciente...</option>
+                  <option value="María González">María González</option>
+                  <option value="Carlos Rodríguez">Carlos Rodríguez</option>
+                  <option value="Ana Martínez">Ana Martínez</option>
+                </select> */}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="date">Fecha</label>
+                <input 
+                  type="date" 
+                  id="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="time">Hora</label>
+                <input 
+                  type="time" 
+                  id="time"
+                  name="time"
+                  value={formData.time}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="type">Tipo de Tratamiento</label>
+                <select 
+                  id="type"
+                  name="type"
+                  value={formData.type}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="">Seleccionar tratamiento...</option>
+                  <option value="Limpieza dental">Limpieza dental</option>
+                  <option value="Extracción">Extracción</option>
+                  <option value="Consulta">Consulta</option>
+                  <option value="Blanqueamiento">Blanqueamiento</option>
+                  <option value="Ortodoncia">Ortodoncia</option>
+                </select>
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-outline" onClick={handleCloseModal}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary">
+                  Agendar Turno
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
