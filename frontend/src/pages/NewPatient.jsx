@@ -1,10 +1,10 @@
 // PatientRecord.js
 import React, { useState } from 'react';
 import '../styles/NewPatient.css';
-import { 
+import {
   Calendar,
-  FileText, 
-  Clipboard, 
+  FileText,
+  Clipboard,
   User,
   Heart,
   AlertCircle,
@@ -22,12 +22,14 @@ import {
   Home,
   Briefcase
 } from 'lucide-react';
-import Navigation from '../components/Navigation';
+import NavBar from '../components/NavBar';
+import { useNavigate } from 'react-router-dom';
 
 const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
   const [activeTab, setActiveTab] = useState('odontograma');
   // eslint-disable-next-line no-unused-vars
   const [currentStep, setCurrentStep] = useState(1);
+  const [activeNav, setActiveNav] = useState('dashboard');
   const [medicalHistory, setMedicalHistory] = useState({
     // Datos personales
     name: 'María',
@@ -37,7 +39,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     email: 'maria.gonzalez@email.com',
     address: 'Calle Principal 123, Ciudad',
     occupation: 'Ingeniera',
-    
+
     // Obra social
     healthInsurance: {
       number: '123456789',
@@ -45,14 +47,14 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       observations: 'Sin observaciones',
       elements: '1'
     },
-    
+
     // Acta de consentimiento
     consent: {
       dni: '',
       readAccepted: false,
       date: new Date().toISOString().split('T')[0]
     },
-    
+
     // Datos médicos
     primaryDoctor: '',
     primaryDoctorPhone: '',
@@ -69,7 +71,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       wasHospitalized: false,
       reason: ''
     },
-    
+
     // Historial médico
     healingProblems: false,
     bloodType: '',
@@ -80,7 +82,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     pregnancyTime: '',
     obstetrician: '',
     obstetricianPhone: '',
-    
+
     // Enfermedades (marcar con X)
     diseases: {
       diabetes: false,
@@ -119,7 +121,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       operations: false,
       glandularDiseases: false
     },
-    
+
     observations: ''
   });
 
@@ -148,6 +150,12 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     { number: 27, type: 'Molar', status: 'extracted' },
     { number: 28, type: 'Molar', status: 'healthy' }
   ];
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/login');
+  };
 
   const renderOdontograma = () => (
     <div className="odontograma-section">
@@ -217,7 +225,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
 
         <div className="dental-notes">
           <h4>Observaciones Odontológicas</h4>
-          <textarea 
+          <textarea
             className="notes-textarea"
             placeholder="Ingrese observaciones sobre el estado dental del paciente..."
             rows="4"
@@ -282,7 +290,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               type="text"
               id="name"
               value={medicalHistory.name}
-              onChange={(e) => setMedicalHistory({...medicalHistory, name: e.target.value})}
+              onChange={(e) => setMedicalHistory({ ...medicalHistory, name: e.target.value })}
               placeholder="Nombre"
             />
           </div>
@@ -292,7 +300,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               type="text"
               id="lastname"
               value={medicalHistory.lastname}
-              onChange={(e) => setMedicalHistory({...medicalHistory, lastname: e.target.value})}
+              onChange={(e) => setMedicalHistory({ ...medicalHistory, lastname: e.target.value })}
               placeholder="Apellido"
             />
           </div>
@@ -302,7 +310,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               type="date"
               id="birthDate"
               value={medicalHistory.birthDate}
-              onChange={(e) => setMedicalHistory({...medicalHistory, birthDate: e.target.value})}
+              onChange={(e) => setMedicalHistory({ ...medicalHistory, birthDate: e.target.value })}
             />
           </div>
         </div>
@@ -316,7 +324,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 type="tel"
                 id="phone"
                 value={medicalHistory.phone}
-                onChange={(e) => setMedicalHistory({...medicalHistory, phone: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, phone: e.target.value })}
                 placeholder="+1 234 567 890"
               />
             </div>
@@ -329,7 +337,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 type="email"
                 id="email"
                 value={medicalHistory.email}
-                onChange={(e) => setMedicalHistory({...medicalHistory, email: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, email: e.target.value })}
                 placeholder="email@ejemplo.com"
               />
             </div>
@@ -345,7 +353,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 type="text"
                 id="address"
                 value={medicalHistory.address}
-                onChange={(e) => setMedicalHistory({...medicalHistory, address: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, address: e.target.value })}
                 placeholder="Calle y número"
               />
             </div>
@@ -358,7 +366,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 type="text"
                 id="occupation"
                 value={medicalHistory.occupation}
-                onChange={(e) => setMedicalHistory({...medicalHistory, occupation: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, occupation: e.target.value })}
                 placeholder="Profesión u oficio"
               />
             </div>
@@ -375,8 +383,8 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 id="insuranceNumber"
                 value={medicalHistory.healthInsurance.number}
                 onChange={(e) => setMedicalHistory({
-                  ...medicalHistory, 
-                  healthInsurance: {...medicalHistory.healthInsurance, number: e.target.value}
+                  ...medicalHistory,
+                  healthInsurance: { ...medicalHistory.healthInsurance, number: e.target.value }
                 })}
                 placeholder="Número de afiliado"
               />
@@ -388,7 +396,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.healthInsurance.isHolder}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    healthInsurance: {...medicalHistory.healthInsurance, isHolder: e.target.checked}
+                    healthInsurance: { ...medicalHistory.healthInsurance, isHolder: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -406,7 +414,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 value={medicalHistory.healthInsurance.elements}
                 onChange={(e) => setMedicalHistory({
                   ...medicalHistory,
-                  healthInsurance: {...medicalHistory.healthInsurance, elements: e.target.value}
+                  healthInsurance: { ...medicalHistory.healthInsurance, elements: e.target.value }
                 })}
                 min="1"
               />
@@ -420,7 +428,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               value={medicalHistory.healthInsurance.observations}
               onChange={(e) => setMedicalHistory({
                 ...medicalHistory,
-                healthInsurance: {...medicalHistory.healthInsurance, observations: e.target.value}
+                healthInsurance: { ...medicalHistory.healthInsurance, observations: e.target.value }
               })}
               placeholder="Observaciones sobre la obra social..."
               rows="3"
@@ -444,10 +452,10 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       <div className="consent-form">
         <div className="consent-text">
           <p>
-            En este acto, yo __________ DNI __________ autorizo a Od ______ M.P. _____ 
-            y/o asociados o ayudantes a realizar el tratamiento informado, conversado 
-            con el profesional sobre la naturaleza y propósito del tratamiento, sobre 
-            la posibilidad de complicaciones, los riesgos y administración de anestesia 
+            En este acto, yo __________ DNI __________ autorizo a Od ______ M.P. _____
+            y/o asociados o ayudantes a realizar el tratamiento informado, conversado
+            con el profesional sobre la naturaleza y propósito del tratamiento, sobre
+            la posibilidad de complicaciones, los riesgos y administración de anestesia
             local, práctica, radiografías y otros métodos de diagnóstico.
           </p>
         </div>
@@ -462,7 +470,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 value={medicalHistory.consent.dni}
                 onChange={(e) => setMedicalHistory({
                   ...medicalHistory,
-                  consent: {...medicalHistory.consent, dni: e.target.value}
+                  consent: { ...medicalHistory.consent, dni: e.target.value }
                 })}
                 placeholder="Ingrese su DNI"
               />
@@ -475,7 +483,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 value={medicalHistory.consent.date}
                 onChange={(e) => setMedicalHistory({
                   ...medicalHistory,
-                  consent: {...medicalHistory.consent, date: e.target.value}
+                  consent: { ...medicalHistory.consent, date: e.target.value }
                 })}
                 readOnly
               />
@@ -489,7 +497,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 checked={medicalHistory.consent.readAccepted}
                 onChange={(e) => setMedicalHistory({
                   ...medicalHistory,
-                  consent: {...medicalHistory.consent, readAccepted: e.target.checked}
+                  consent: { ...medicalHistory.consent, readAccepted: e.target.checked }
                 })}
               />
               <span className="checkmark large"></span>
@@ -536,7 +544,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 type="text"
                 id="primaryDoctor"
                 value={medicalHistory.primaryDoctor}
-                onChange={(e) => setMedicalHistory({...medicalHistory, primaryDoctor: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, primaryDoctor: e.target.value })}
                 placeholder="Nombre del médico"
               />
             </div>
@@ -546,7 +554,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 type="tel"
                 id="primaryDoctorPhone"
                 value={medicalHistory.primaryDoctorPhone}
-                onChange={(e) => setMedicalHistory({...medicalHistory, primaryDoctorPhone: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, primaryDoctorPhone: e.target.value })}
                 placeholder="Teléfono del médico"
               />
             </div>
@@ -558,7 +566,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               type="text"
               id="primaryService"
               value={medicalHistory.primaryService}
-              onChange={(e) => setMedicalHistory({...medicalHistory, primaryService: e.target.value})}
+              onChange={(e) => setMedicalHistory({ ...medicalHistory, primaryService: e.target.value })}
               placeholder="Hospital o clínica"
             />
           </div>
@@ -570,7 +578,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 className={`yes-no-btn ${medicalHistory.allergies.hasAllergies ? 'active' : ''}`}
                 onClick={() => setMedicalHistory({
                   ...medicalHistory,
-                  allergies: {...medicalHistory.allergies, hasAllergies: true}
+                  allergies: { ...medicalHistory.allergies, hasAllergies: true }
                 })}
               >
                 <CheckCircle size={16} />
@@ -580,7 +588,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 className={`yes-no-btn ${!medicalHistory.allergies.hasAllergies ? 'active' : ''}`}
                 onClick={() => setMedicalHistory({
                   ...medicalHistory,
-                  allergies: {...medicalHistory.allergies, hasAllergies: false}
+                  allergies: { ...medicalHistory.allergies, hasAllergies: false }
                 })}
               >
                 <X size={16} />
@@ -596,7 +604,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   value={medicalHistory.allergies.description}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    allergies: {...medicalHistory.allergies, description: e.target.value}
+                    allergies: { ...medicalHistory.allergies, description: e.target.value }
                   })}
                   placeholder="Describa las alergias"
                 />
@@ -611,7 +619,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 className={`yes-no-btn ${medicalHistory.currentTreatment.underTreatment ? 'active' : ''}`}
                 onClick={() => setMedicalHistory({
                   ...medicalHistory,
-                  currentTreatment: {...medicalHistory.currentTreatment, underTreatment: true}
+                  currentTreatment: { ...medicalHistory.currentTreatment, underTreatment: true }
                 })}
               >
                 <CheckCircle size={16} />
@@ -621,7 +629,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 className={`yes-no-btn ${!medicalHistory.currentTreatment.underTreatment ? 'active' : ''}`}
                 onClick={() => setMedicalHistory({
                   ...medicalHistory,
-                  currentTreatment: {...medicalHistory.currentTreatment, underTreatment: false}
+                  currentTreatment: { ...medicalHistory.currentTreatment, underTreatment: false }
                 })}
               >
                 <X size={16} />
@@ -637,7 +645,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   value={medicalHistory.currentTreatment.description}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    currentTreatment: {...medicalHistory.currentTreatment, description: e.target.value}
+                    currentTreatment: { ...medicalHistory.currentTreatment, description: e.target.value }
                   })}
                   placeholder="Describa el tratamiento"
                 />
@@ -652,7 +660,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 className={`yes-no-btn ${medicalHistory.hospitalization.wasHospitalized ? 'active' : ''}`}
                 onClick={() => setMedicalHistory({
                   ...medicalHistory,
-                  hospitalization: {...medicalHistory.hospitalization, wasHospitalized: true}
+                  hospitalization: { ...medicalHistory.hospitalization, wasHospitalized: true }
                 })}
               >
                 <CheckCircle size={16} />
@@ -662,7 +670,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 className={`yes-no-btn ${!medicalHistory.hospitalization.wasHospitalized ? 'active' : ''}`}
                 onClick={() => setMedicalHistory({
                   ...medicalHistory,
-                  hospitalization: {...medicalHistory.hospitalization, wasHospitalized: false}
+                  hospitalization: { ...medicalHistory.hospitalization, wasHospitalized: false }
                 })}
               >
                 <X size={16} />
@@ -678,7 +686,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   value={medicalHistory.hospitalization.reason}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    hospitalization: {...medicalHistory.hospitalization, reason: e.target.value}
+                    hospitalization: { ...medicalHistory.hospitalization, reason: e.target.value }
                   })}
                   placeholder="Razón de la hospitalización"
                 />
@@ -690,20 +698,20 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
         {/* Sección 2 */}
         <div className="anamnesis-part">
           <h4>(2) Historial Médico</h4>
-          
+
           <div className="yes-no-group">
             <h5>¿Tiene o tuvo alguna vez problemas para cicatrizar?</h5>
             <div className="yes-no-buttons">
               <button
                 className={`yes-no-btn ${medicalHistory.healingProblems ? 'active' : ''}`}
-                onClick={() => setMedicalHistory({...medicalHistory, healingProblems: true})}
+                onClick={() => setMedicalHistory({ ...medicalHistory, healingProblems: true })}
               >
                 <CheckCircle size={16} />
                 SI
               </button>
               <button
                 className={`yes-no-btn ${!medicalHistory.healingProblems ? 'active' : ''}`}
-                onClick={() => setMedicalHistory({...medicalHistory, healingProblems: false})}
+                onClick={() => setMedicalHistory({ ...medicalHistory, healingProblems: false })}
               >
                 <X size={16} />
                 NO
@@ -717,7 +725,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               <select
                 id="bloodType"
                 value={medicalHistory.bloodType}
-                onChange={(e) => setMedicalHistory({...medicalHistory, bloodType: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, bloodType: e.target.value })}
               >
                 <option value="">Seleccionar</option>
                 <option value="A">A</option>
@@ -731,7 +739,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               <select
                 id="bloodRh"
                 value={medicalHistory.bloodRh}
-                onChange={(e) => setMedicalHistory({...medicalHistory, bloodRh: e.target.value})}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, bloodRh: e.target.value })}
               >
                 <option value="">Seleccionar</option>
                 <option value="+">+ (Positivo)</option>
@@ -745,14 +753,14 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
             <div className="yes-no-buttons">
               <button
                 className={`yes-no-btn ${medicalHistory.takesMedication ? 'active' : ''}`}
-                onClick={() => setMedicalHistory({...medicalHistory, takesMedication: true})}
+                onClick={() => setMedicalHistory({ ...medicalHistory, takesMedication: true })}
               >
                 <CheckCircle size={16} />
                 SI
               </button>
               <button
                 className={`yes-no-btn ${!medicalHistory.takesMedication ? 'active' : ''}`}
-                onClick={() => setMedicalHistory({...medicalHistory, takesMedication: false})}
+                onClick={() => setMedicalHistory({ ...medicalHistory, takesMedication: false })}
               >
                 <X size={16} />
                 NO
@@ -765,7 +773,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   type="text"
                   id="medication"
                   value={medicalHistory.medication}
-                  onChange={(e) => setMedicalHistory({...medicalHistory, medication: e.target.value})}
+                  onChange={(e) => setMedicalHistory({ ...medicalHistory, medication: e.target.value })}
                   placeholder="Nombre del medicamento"
                 />
               </div>
@@ -777,14 +785,14 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
             <div className="yes-no-buttons">
               <button
                 className={`yes-no-btn ${medicalHistory.isPregnant ? 'active' : ''}`}
-                onClick={() => setMedicalHistory({...medicalHistory, isPregnant: true})}
+                onClick={() => setMedicalHistory({ ...medicalHistory, isPregnant: true })}
               >
                 <CheckCircle size={16} />
                 SI
               </button>
               <button
                 className={`yes-no-btn ${!medicalHistory.isPregnant ? 'active' : ''}`}
-                onClick={() => setMedicalHistory({...medicalHistory, isPregnant: false})}
+                onClick={() => setMedicalHistory({ ...medicalHistory, isPregnant: false })}
               >
                 <X size={16} />
                 NO
@@ -798,7 +806,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                     type="text"
                     id="pregnancyTime"
                     value={medicalHistory.pregnancyTime}
-                    onChange={(e) => setMedicalHistory({...medicalHistory, pregnancyTime: e.target.value})}
+                    onChange={(e) => setMedicalHistory({ ...medicalHistory, pregnancyTime: e.target.value })}
                     placeholder="Ej: 12 semanas"
                   />
                 </div>
@@ -808,7 +816,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                     type="text"
                     id="obstetrician"
                     value={medicalHistory.obstetrician}
-                    onChange={(e) => setMedicalHistory({...medicalHistory, obstetrician: e.target.value})}
+                    onChange={(e) => setMedicalHistory({ ...medicalHistory, obstetrician: e.target.value })}
                     placeholder="Nombre del obstetra"
                   />
                 </div>
@@ -818,7 +826,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                     type="tel"
                     id="obstetricianPhone"
                     value={medicalHistory.obstetricianPhone}
-                    onChange={(e) => setMedicalHistory({...medicalHistory, obstetricianPhone: e.target.value})}
+                    onChange={(e) => setMedicalHistory({ ...medicalHistory, obstetricianPhone: e.target.value })}
                     placeholder="Teléfono del obstetra"
                   />
                 </div>
@@ -831,7 +839,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
         <div className="anamnesis-part">
           <h4>(3) Antecedentes Patológicos</h4>
           <p className="section-subtitle">Marcar con una X aquellas opciones que resulten positivas</p>
-          
+
           <div className="diseases-grid">
             {/* Columna 1 */}
             <div className="disease-column">
@@ -841,7 +849,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.diabetes}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, diabetes: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, diabetes: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -853,7 +861,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.hypertension}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, hypertension: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, hypertension: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -865,7 +873,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.rheumaticFever}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, rheumaticFever: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, rheumaticFever: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -877,7 +885,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.boneDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, boneDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, boneDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -889,7 +897,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.arthritis}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, arthritis: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, arthritis: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -901,7 +909,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.muscleDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, muscleDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, muscleDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -913,7 +921,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.asthma}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, asthma: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, asthma: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -925,7 +933,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.respiratoryDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, respiratoryDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, respiratoryDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -937,7 +945,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.sinusitis}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, sinusitis: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, sinusitis: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -949,7 +957,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.jointDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, jointDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, jointDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -961,7 +969,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.hepatitis}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, hepatitis: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, hepatitis: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -973,7 +981,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.kidneyDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, kidneyDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, kidneyDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -985,7 +993,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.liverDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, liverDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, liverDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -997,7 +1005,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.congenitalDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, congenitalDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, congenitalDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1009,7 +1017,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.chagas}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, chagas: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, chagas: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1025,7 +1033,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.headaches}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, headaches: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, headaches: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1037,7 +1045,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.epilepsy}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, epilepsy: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, epilepsy: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1049,7 +1057,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.psychiatric}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, psychiatric: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, psychiatric: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1061,7 +1069,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.unconsciousness}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, unconsciousness: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, unconsciousness: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1073,7 +1081,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.heartDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, heartDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, heartDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1085,7 +1093,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.consumesAlcohol}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, consumesAlcohol: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, consumesAlcohol: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1097,7 +1105,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.bloodDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, bloodDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, bloodDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1109,7 +1117,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.consumesTobacco}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, consumesTobacco: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, consumesTobacco: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1121,7 +1129,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.lymphDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, lymphDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, lymphDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1133,7 +1141,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.surgeries}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, surgeries: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, surgeries: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1145,7 +1153,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.skinDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, skinDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, skinDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1157,7 +1165,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.receivedTransfusions}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, receivedTransfusions: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, receivedTransfusions: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1169,7 +1177,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.std}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, std: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, std: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1181,7 +1189,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.receivedDialysis}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, receivedDialysis: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, receivedDialysis: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1193,7 +1201,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.chronicInfections}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, chronicInfections: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, chronicInfections: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1205,7 +1213,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.operations}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, operations: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, operations: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1217,7 +1225,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                   checked={medicalHistory.diseases.glandularDiseases}
                   onChange={(e) => setMedicalHistory({
                     ...medicalHistory,
-                    diseases: {...medicalHistory.diseases, glandularDiseases: e.target.checked}
+                    diseases: { ...medicalHistory.diseases, glandularDiseases: e.target.checked }
                   })}
                 />
                 <span className="checkmark"></span>
@@ -1231,7 +1239,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
             <textarea
               id="observationsGeneral"
               value={medicalHistory.observations}
-              onChange={(e) => setMedicalHistory({...medicalHistory, observations: e.target.value})}
+              onChange={(e) => setMedicalHistory({ ...medicalHistory, observations: e.target.value })}
               placeholder="Observaciones adicionales sobre el historial médico..."
               rows="3"
             />
@@ -1269,13 +1277,13 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       setActiveTab(tabs[currentIndex + 1].id);
     }
   };
-
   return (
     <div className="app">
-      <Navigation 
+      <NavBar
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
         user={user}
-        setIsAuthenticated={setIsAuthenticated}
-        setUser={setUser}
+        handleLogout={handleLogout}
       />
 
       <main className="main-content">
@@ -1318,19 +1326,19 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
 
           {/* Navegación por pasos */}
           <div className="steps-navigation">
-            <button 
-              className="step-nav-btn prev" 
+            <button
+              className="step-nav-btn prev"
               onClick={handlePrevious}
               disabled={tabs.findIndex(tab => tab.id === activeTab) === 0}
             >
               <ChevronLeft size={18} />
               <span>Anterior</span>
             </button>
-            
+
             <div className="steps-indicator">
               {tabs.map((tab, index) => (
                 <div key={tab.id} className="step-indicator">
-                  <div 
+                  <div
                     className={`step-dot ${activeTab === tab.id ? 'active' : ''} ${index < tabs.findIndex(t => t.id === activeTab) ? 'completed' : ''}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
@@ -1340,9 +1348,9 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 </div>
               ))}
             </div>
-            
-            <button 
-              className="step-nav-btn next" 
+
+            <button
+              className="step-nav-btn next"
               onClick={handleNext}
               disabled={tabs.findIndex(tab => tab.id === activeTab) === tabs.length - 1}
             >
@@ -1360,9 +1368,9 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
           <div className="progress-footer">
             <div className="progress-info">
               <div className="progress-bar">
-                <div 
+                <div
                   className="progress-fill"
-                  style={{width: `${((tabs.findIndex(tab => tab.id === activeTab) + 1) / tabs.length) * 100}%`}}
+                  style={{ width: `${((tabs.findIndex(tab => tab.id === activeTab) + 1) / tabs.length) * 100}%` }}
                 ></div>
               </div>
               <span className="progress-text">
