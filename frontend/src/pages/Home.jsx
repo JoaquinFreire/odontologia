@@ -20,7 +20,7 @@ import NavBar from '../components/NavBar';
 import { appointmentService } from '../services/appointmentService';
 
 
-const Home = ({ setIsAuthenticated, user, setUser }) => {
+const Home = ({ user, handleLogout }) => {
   const [showModal, setShowModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [todayAppointments, setTodayAppointments] = useState([]);
@@ -42,12 +42,6 @@ const Home = ({ setIsAuthenticated, user, setUser }) => {
     dni: ''
   });
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    navigate('/login');
-  };
 
   const loadAllAppointmentData = async () => {
     try {
