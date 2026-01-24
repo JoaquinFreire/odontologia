@@ -6,9 +6,7 @@ export const authService = {
     try {
       console.log('=== INICIANDO LOGIN ===');
       console.log('Email:', email);
-      console.log('Password length:', password.length);
 
-      // Obtener usuario de la tabla user
       const { data: users, error: userError } = await supabase
         .from('user')
         .select('*')
@@ -23,10 +21,7 @@ export const authService = {
         throw new Error('Credenciales inválidas');
       }
 
-      // Validar contraseña con bcrypt
       console.log('Validando contraseña...');
-      console.log('Password hash en BD:', users.password_hash);
-      
       const passwordMatch = await bcrypt.compare(password, users.password_hash);
       console.log('¿Contraseña válida?:', passwordMatch);
 
@@ -35,28 +30,23 @@ export const authService = {
       }
 
       console.log('=== LOGIN EXITOSO ===');
-      console.log('User data:', users);
 
-      // Crear sesión simulada guardando en localStorage
-      const sessionData = {
-        user: {
-          id: users.id,
-          email: users.email,
-          name: users.name,
-          lastname: users.lastname,
-          tuition: users.tuition,
-        },
-        timestamp: Date.now(),
+      const userData = {
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        lastname: users.lastname,
+        tuition: users.tuition,
       };
 
-      localStorage.setItem('auth_session', JSON.stringify(sessionData));
-      console.log('Sesión guardada en localStorage');
+      // Guardar en sessionStorage en lugar de cookies
+      sessionStorage.setItem('auth_session', JSON.stringify(userData));
+      console.log('Sesión guardada en sessionStorage');
 
-      return sessionData.user;
+      return userData;
     } catch (error) {
       console.error('=== ERROR EN LOGIN ===');
-      console.error('Error completo:', error);
-      console.error('Error message:', error.message);
+      console.error('Error:', error.message);
       throw error;
     }
   },
@@ -64,8 +54,13 @@ export const authService = {
   logout: async () => {
     try {
       console.log('=== INICIANDO LOGOUT ===');
-      localStorage.removeItem('auth_session');
-      console.log('Sesión eliminada');
+      console.log('SessionStorage antes:', sessionStorage.getItem('auth_session'));
+      
+      // Eliminar de sessionStorage
+      sessionStorage.removeItem('auth_session');
+      
+      console.log('SessionStorage después:', sessionStorage.getItem('auth_session'));
+      console.log('Sesión eliminada completamente');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       throw error;
@@ -75,9 +70,10 @@ export const authService = {
   checkAuth: async () => {
     try {
       console.log('=== VERIFICANDO AUTENTICACIÓN ===');
-      const session = localStorage.getItem('auth_session');
+      const session = sessionStorage.getItem('auth_session');
       const isAuth = !!session;
       console.log('¿Autenticado?:', isAuth);
+      console.log('SessionStorage:', session);
       return isAuth;
     } catch (error) {
       console.error('Error verificando autenticación:', error);
@@ -88,19 +84,27 @@ export const authService = {
   getUser: async () => {
     try {
       console.log('=== OBTENIENDO USUARIO ===');
-      const session = localStorage.getItem('auth_session');
+      const session = sessionStorage.getItem('auth_session');
       
       if (!session) {
         console.warn('No session found');
         return null;
       }
 
-      const sessionData = JSON.parse(session);
-      console.log('User data:', sessionData.user);
-      return sessionData.user;
+      const user = JSON.parse(session);
+      console.log('User data:', user);
+      return user;
     } catch (error) {
       console.error('Error obteniendo datos del usuario:', error);
       return null;
     }
   },
+
+  clearSession: () => {
+    try {
+      sessionStorage.removeItem('auth_session');
+    } catch (error) {
+      console.error('Error limpiando sesión:', error);
+    }
+  }
 };

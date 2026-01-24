@@ -19,6 +19,7 @@ function App() {
     const checkAuth = async () => {
       try {
         console.log('Verificando autenticación inicial...');
+        console.log('Cookies:', document.cookie);
         
         const authenticated = await authService.checkAuth();
         console.log('Autenticado:', authenticated);
@@ -27,13 +28,14 @@ function App() {
         if (authenticated) {
           const userData = await authService.getUser();
           console.log('User data:', userData);
-          if (userData) {
-            setUser(userData);
-          }
+          setUser(userData || null);
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error('Error inicial de autenticación:', error);
         setIsAuthenticated(false);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -41,6 +43,21 @@ function App() {
 
     checkAuth();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      console.log('App: Iniciando logout');
+      await authService.logout();
+      setIsAuthenticated(false);
+      setUser(null);
+      console.log('App: Logout completado correctamente');
+    } catch (error) {
+      console.error('Error en logout:', error);
+      // Forzar cierre aunque haya error
+      setIsAuthenticated(false);
+      setUser(null);
+    }
+  };
 
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Cargando aplicación...</div>;
@@ -57,7 +74,7 @@ function App() {
           path="/" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Home setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+              <Home setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />
@@ -65,7 +82,7 @@ function App() {
           path="/diary" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Diary setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+              <Diary setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />
@@ -73,7 +90,7 @@ function App() {
           path="/patients" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Diary setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+              <Diary setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />
@@ -81,7 +98,7 @@ function App() {
           path="/newpatient" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <NewPatient setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+              <NewPatient setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />
@@ -89,7 +106,7 @@ function App() {
           path="/configuration" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Configuration setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} />
+              <Configuration setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />
@@ -101,7 +118,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
       </Routes>
     </Router>
   );

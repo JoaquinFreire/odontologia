@@ -29,6 +29,18 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
     navigate(path);
   };
 
+  const onLogout = async () => {
+    try {
+      console.log('NavBar: Iniciando logout');
+      await handleLogout();
+      console.log('NavBar: Logout completado');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('NavBar: Error en logout:', error);
+      navigate('/login', { replace: true });
+    }
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -111,7 +123,7 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
             <span className="user-role">Odontólogo/a</span>
           </div>
         </div>
-        <button onClick={handleLogout} className="btn-text logout-btn">
+        <button onClick={onLogout} className="btn-text logout-btn">
           Cerrar sesión
         </button>
         <p className="footer-text">© 2024 Odontología</p>
