@@ -1,73 +1,8 @@
 // components/PatientRecord/Anamnesis.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Save, CheckCircle, X } from 'lucide-react';
-// eslint-disable-next-line no-unused-vars
-const Anamnesis = ({ patientData, setPatientData }) => {
-  const [anamnesisData, setAnamnesisData] = useState({
-    primaryDoctor: '',
-    primaryDoctorPhone: '',
-    primaryService: '',
-    allergies: {
-      hasAllergies: false,
-      description: ''
-    },
-    currentTreatment: {
-      underTreatment: false,
-      description: ''
-    },
-    hospitalization: {
-      wasHospitalized: false,
-      reason: ''
-    },
-    healingProblems: false,
-    bloodType: '',
-    bloodRh: '',
-    takesMedication: false,
-    medication: '',
-    isPregnant: false,
-    pregnancyTime: '',
-    obstetrician: '',
-    obstetricianPhone: '',
-    diseases: {
-      diabetes: false,
-      headaches: false,
-      trauma: false,
-      neurological: false,
-      hypertension: false,
-      epilepsy: false,
-      psoriasis: false,
-      psychiatric: false,
-      rheumaticFever: false,
-      unconsciousness: false,
-      boneDiseases: false,
-      heartDiseases: false,
-      arthritis: false,
-      consumesAlcohol: false,
-      muscleDiseases: false,
-      bloodDiseases: false,
-      asthma: false,
-      consumesTobacco: false,
-      respiratoryDiseases: false,
-      lymphDiseases: false,
-      sinusitis: false,
-      surgeries: false,
-      jointDiseases: false,
-      skinDiseases: false,
-      hepatitis: false,
-      receivedTransfusions: false,
-      kidneyDiseases: false,
-      std: false,
-      liverDiseases: false,
-      receivedDialysis: false,
-      congenitalDiseases: false,
-      chronicInfections: false,
-      chagas: false,
-      operations: false,
-      glandularDiseases: false
-    },
-    observations: ''
-  });
 
+const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
   const handleDiseaseChange = (disease, value) => {
     setAnamnesisData(prev => ({
       ...prev,
