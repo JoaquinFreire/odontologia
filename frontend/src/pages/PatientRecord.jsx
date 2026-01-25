@@ -184,7 +184,8 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     }
 
     try {
-      const result = await saveCompletePatient(patientData, anamnesisData);
+      // ✅ Pasar user.id
+      const result = await saveCompletePatient(patientData, anamnesisData, user.id);
       
       if (result.success) {
         setMessage({ 

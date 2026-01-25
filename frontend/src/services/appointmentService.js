@@ -1,12 +1,12 @@
 import { supabase } from '../config/supabaseClient';
 
 export const appointmentService = {
-  // Obtener turnos de hoy
-  getTodayAppointments: async () => {
+  // Obtener turnos de hoy del usuario actual
+  getTodayAppointments: async (userId) => {
     try {
       console.log('=== OBTENIENDO TURNOS DE HOY ===');
+      console.log('User ID:', userId);
       
-      // Obtener fecha de hoy
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
@@ -17,18 +17,16 @@ export const appointmentService = {
       const { data, error } = await supabase
         .from('shift')
         .select('*')
+        .eq('user_id', userId) // ← Filtrar por usuario
         .gte('datetime', startOfDay.toISOString())
         .lt('datetime', endOfDay.toISOString())
-        .eq('status', false)  // Solo los pendientes
+        .eq('status', false)
         .order('datetime', { ascending: true });
 
       console.log('Query error:', error);
       console.log('Today appointments:', data);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       return data || [];
     } catch (error) {
       console.error('Error obteniendo turnos de hoy:', error);
@@ -36,12 +34,12 @@ export const appointmentService = {
     }
   },
 
-  // Obtener turnos atrasados
-  getOverdueAppointments: async () => {
+  // Obtener turnos atrasados del usuario actual
+  getOverdueAppointments: async (userId) => {
     try {
       console.log('=== OBTENIENDO TURNOS ATRASADOS ===');
+      console.log('User ID:', userId);
       
-      // Obtener turnos pendientes anteriores a hoy
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
@@ -50,17 +48,15 @@ export const appointmentService = {
       const { data, error } = await supabase
         .from('shift')
         .select('*')
+        .eq('user_id', userId) // ← Filtrar por usuario
         .lt('datetime', startOfDay.toISOString())
-        .eq('status', false)  // Solo los pendientes
+        .eq('status', false)
         .order('datetime', { ascending: false });
 
       console.log('Query error:', error);
       console.log('Overdue appointments:', data);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       return data || [];
     } catch (error) {
       console.error('Error obteniendo turnos atrasados:', error);
@@ -68,23 +64,22 @@ export const appointmentService = {
     }
   },
 
-  // Obtener total de turnos pendientes
-  getTotalPendingAppointments: async () => {
+  // Obtener total de turnos pendientes del usuario actual
+  getTotalPendingAppointments: async (userId) => {
     try {
       console.log('=== OBTENIENDO TOTAL DE TURNOS PENDIENTES ===');
+      console.log('User ID:', userId);
 
       const { count, error } = await supabase
         .from('shift')
         .select('*', { count: 'exact' })
+        .eq('user_id', userId) // ← Filtrar por usuario
         .eq('status', false);
 
       console.log('Query error:', error);
       console.log('Total pending:', count);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       return count || 0;
     } catch (error) {
       console.error('Error obteniendo total de turnos pendientes:', error);
@@ -93,24 +88,23 @@ export const appointmentService = {
   },
 
   // Marcar turno como atendido
-  markAppointmentAsCompleted: async (id) => {
+  markAppointmentAsCompleted: async (id, userId) => {
     try {
       console.log('=== MARCANDO TURNO COMO ATENDIDO ===');
       console.log('ID:', id);
+      console.log('User ID:', userId);
 
       const { data, error } = await supabase
         .from('shift')
         .update({ status: true })
         .eq('id', id)
+        .eq('user_id', userId) // ← Verificar que pertenece al usuario
         .select();
 
       console.log('Update error:', error);
       console.log('Updated appointment:', data);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       console.log('=== TURNO MARCADO COMO ATENDIDO ===');
       return data[0];
     } catch (error) {
@@ -119,10 +113,12 @@ export const appointmentService = {
     }
   },
 
-  createAppointment: async (appointmentData) => {
+  // Crear turno con user_id del usuario logueado
+  createAppointment: async (appointmentData, userId) => {
     try {
       console.log('=== CREANDO TURNO ===');
       console.log('Datos del turno:', appointmentData);
+      console.log('User ID:', userId);
 
       const dateTimeString = `${appointmentData.date}T${appointmentData.time}:00`;
       const datetime = new Date(dateTimeString).toISOString();
@@ -134,7 +130,8 @@ export const appointmentService = {
         datetime: datetime,
         dni: appointmentData.dni || null,
         type: appointmentData.type,
-        status: false, // Por defecto sin atender
+        status: false,
+        user_id: userId // ← Agregar user_id
       };
 
       console.log('Datos a insertar:', dataToInsert);
@@ -147,39 +144,34 @@ export const appointmentService = {
       console.log('Insert error:', error);
       console.log('Insert data:', data);
 
-      if (error) {
-        console.error('Error al crear turno:', error.message);
-        throw new Error(error.message || 'Error al crear turno');
-      }
+      if (error) throw new Error(error.message || 'Error al crear turno');
 
       console.log('=== TURNO CREADO EXITOSAMENTE ===');
       console.log('Turno data:', data);
-
       return data[0];
     } catch (error) {
       console.error('=== ERROR EN createAppointment ===');
       console.error('Error completo:', error);
-      console.error('Error message:', error.message);
       throw error;
     }
   },
 
-  getAppointments: async () => {
+  // Obtener turnos del usuario actual
+  getAppointments: async (userId) => {
     try {
       console.log('=== OBTENIENDO TURNOS ===');
+      console.log('User ID:', userId);
 
       const { data, error } = await supabase
         .from('shift')
         .select('*')
+        .eq('user_id', userId) // ← Filtrar por usuario
         .order('datetime', { ascending: true });
 
       console.log('Query error:', error);
       console.log('Turnos data:', data);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       return data || [];
     } catch (error) {
       console.error('Error obteniendo turnos:', error);
@@ -187,24 +179,24 @@ export const appointmentService = {
     }
   },
 
-  getAppointmentById: async (id) => {
+  // Obtener turno por ID
+  getAppointmentById: async (id, userId) => {
     try {
       console.log('=== OBTENIENDO TURNO POR ID ===');
       console.log('ID:', id);
+      console.log('User ID:', userId);
 
       const { data, error } = await supabase
         .from('shift')
         .select('*')
         .eq('id', id)
+        .eq('user_id', userId) // ← Verificar que pertenece al usuario
         .single();
 
       console.log('Query error:', error);
       console.log('Turno data:', data);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       return data;
     } catch (error) {
       console.error('Error obteniendo turno:', error);
@@ -212,10 +204,12 @@ export const appointmentService = {
     }
   },
 
-  updateAppointment: async (id, appointmentData) => {
+  // Actualizar turno
+  updateAppointment: async (id, appointmentData, userId) => {
     try {
       console.log('=== ACTUALIZANDO TURNO ===');
       console.log('ID:', id);
+      console.log('User ID:', userId);
       console.log('Datos:', appointmentData);
 
       const dataToUpdate = {};
@@ -232,14 +226,13 @@ export const appointmentService = {
         .from('shift')
         .update(dataToUpdate)
         .eq('id', id)
+        .eq('user_id', userId) // ← Verificar que pertenece al usuario
         .select();
 
       console.log('Update error:', error);
       console.log('Update data:', data);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       console.log('=== TURNO ACTUALIZADO EXITOSAMENTE ===');
       return data[0];
@@ -249,21 +242,22 @@ export const appointmentService = {
     }
   },
 
-  deleteAppointment: async (id) => {
+  // Eliminar turno
+  deleteAppointment: async (id, userId) => {
     try {
       console.log('=== ELIMINANDO TURNO ===');
       console.log('ID:', id);
+      console.log('User ID:', userId);
 
       const { error } = await supabase
         .from('shift')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', userId); // ← Verificar que pertenece al usuario
 
       console.log('Delete error:', error);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       console.log('=== TURNO ELIMINADO EXITOSAMENTE ===');
       return true;

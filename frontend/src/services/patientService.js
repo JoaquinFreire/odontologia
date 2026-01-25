@@ -40,13 +40,14 @@ export const savePatient = async (patientData) => {
   }
 };
 
-// Obtener un paciente por ID
-export const getPatient = async (patientId) => {
+// Obtener un paciente por ID (filtrar por user_id)
+export const getPatient = async (patientId, userId) => {
   try {
     const { data, error } = await supabase
       .from('patient')
       .select('*')
       .eq('id', patientId)
+      .eq('user_id', userId) // ← Filtrar por usuario
       .single();
 
     if (error) throw error;
@@ -58,7 +59,7 @@ export const getPatient = async (patientId) => {
 };
 
 // Guardar paciente completo (paciente + anamnesis)
-export const saveCompletePatient = async (patientData, anamnesisData) => {
+export const saveCompletePatient = async (patientData, anamnesisData, userId) => {
   try {
     // Validar datos del paciente
     if (!patientData.name || !patientData.lastname || !patientData.dni) {
@@ -77,7 +78,7 @@ export const saveCompletePatient = async (patientData, anamnesisData) => {
       };
     }
 
-    // 1. Guardar paciente
+    // 1. Guardar paciente con user_id
     const { data: patientDataSaved, error: patientError } = await supabase
       .from('patient')
       .insert([
@@ -91,7 +92,8 @@ export const saveCompletePatient = async (patientData, anamnesisData) => {
           address: patientData.address || '',
           occupation: patientData.occupation || '',
           affiliate_number: patientData.healthInsurance?.number || '',
-          holder: patientData.healthInsurance?.isHolder || false
+          holder: patientData.healthInsurance?.isHolder || false,
+          user_id: userId // ← Agregar user_id
         }
       ])
       .select();
@@ -100,7 +102,7 @@ export const saveCompletePatient = async (patientData, anamnesisData) => {
 
     const newPatientId = patientDataSaved[0].id;
 
-    // 2. Preparar datos de anamnesis - SOLO LAS COLUMNAS QUE EXISTEN
+    // 2. Preparar datos de anamnesis
     const anamnesisPayload = {
       patient_id: newPatientId,
       alergico: anamnesisData.allergies.hasAllergies || false,
@@ -120,7 +122,6 @@ export const saveCompletePatient = async (patientData, anamnesisData) => {
       obstetra_tel: anamnesisData.obstetricianPhone || null,
       medicamento: anamnesisData.takesMedication || false,
       medicamento_detalles: anamnesisData.medication || null,
-      // JSON con todas las enfermedades
       antecedentes: anamnesisData.diseases
     };
 
@@ -144,13 +145,14 @@ export const saveCompletePatient = async (patientData, anamnesisData) => {
   }
 };
 
-// Obtener paciente con su anamnesis
-export const getPatientWithAnamnesis = async (patientId) => {
+// Obtener paciente con su anamnesis (filtrar por user_id)
+export const getPatientWithAnamnesis = async (patientId, userId) => {
   try {
     const { data: patient, error: patientError } = await supabase
       .from('patient')
       .select('*')
       .eq('id', patientId)
+      .eq('user_id', userId) // ← Filtrar por usuario
       .single();
 
     if (patientError) throw patientError;
@@ -213,12 +215,13 @@ export const updatePatientAnamnesis = async (patientId, anamnesisData) => {
   }
 };
 
-// Obtener todos los pacientes (sin anamnesis)
-export const getAllPatients = async () => {
+// Obtener todos los pacientes del usuario actual
+export const getAllPatients = async (userId) => {
   try {
     const { data, error } = await supabase
       .from('patient')
       .select('*')
+      .eq('user_id', userId) // ← Filtrar por usuario
       .order('id', { ascending: false });
 
     if (error) throw error;

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, X, Edit2, Trash2 } from 'lucide-react';
 import { appointmentService } from '../services/appointmentService';
 import '../styles/calendar.css';
 
-const Calendar = () => {
+const Calendar = ({ userId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -22,13 +22,21 @@ const Calendar = () => {
   // Cargar turnos al cambiar de mes
   useEffect(() => {
     loadAppointments();
-  }, [currentDate]);
+  }, [currentDate, userId]);
 
   const loadAppointments = async () => {
+    if (!userId) {
+      console.warn('userId no disponible');
+      return;
+    }
+
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await appointmentService.getAppointments();
+      console.log('Cargando turnos para usuario:', userId);
+      // ✅ Pasar userId
+      const data = await appointmentService.getAppointments(userId);
       setAppointments(data);
+      console.log('Turnos cargados:', data);
       setError('');
     } catch (err) {
       console.error('Error cargando turnos:', err);

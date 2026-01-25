@@ -27,7 +27,7 @@ const Diary = ({ setIsAuthenticated, user, setUser }) => {
           <div className="content-header">
             <h1>Agenda de Turnos</h1>
           </div>
-          <Calendar />
+          <Calendar userId={user?.id} />
         </div>
       </main>
     </div>
