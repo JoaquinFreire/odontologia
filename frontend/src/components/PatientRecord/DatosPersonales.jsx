@@ -1,6 +1,7 @@
 // components/PatientRecord/DatosPersonales.jsx
 import React from 'react';
-import { Save, Phone, Mail, Home, Briefcase } from 'lucide-react';
+import { Save, Phone, Mail, Home, Briefcase, FileText } from 'lucide-react';
+
 const DatosPersonales = ({ patientData, setPatientData }) => {
   const handleInputChange = (field, value) => {
     setPatientData(prev => ({
@@ -52,6 +53,22 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
             />
           </div>
           <div className="form-group">
+            <label htmlFor="dni">DNI *</label>
+            <div className="input-with-icon">
+              <FileText size={16} />
+              <input
+                type="text"
+                id="dni"
+                value={patientData.dni || ''}
+                onChange={(e) => handleInputChange('dni', e.target.value)}
+                placeholder="DNI sin puntos"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
             <label htmlFor="birthDate">Fecha de Nacimiento *</label>
             <input
               type="date"
@@ -60,9 +77,6 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
               onChange={(e) => handleInputChange('birthDate', e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="form-row">
           <div className="form-group">
             <label htmlFor="phone">Teléfono *</label>
             <div className="input-with-icon">
@@ -76,6 +90,9 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
               />
             </div>
           </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="email">Email *</label>
             <div className="input-with-icon">
@@ -89,11 +106,8 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
               />
             </div>
           </div>
-        </div>
-
-        <div className="form-row">
           <div className="form-group">
-            <label htmlFor="address">Dirección *</label>
+            <label htmlFor="address">Dirección</label>
             <div className="input-with-icon">
               <Home size={16} />
               <input
@@ -105,8 +119,11 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
               />
             </div>
           </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
-            <label htmlFor="occupation">Ocupación *</label>
+            <label htmlFor="occupation">Ocupación</label>
             <div className="input-with-icon">
               <Briefcase size={16} />
               <input
@@ -124,7 +141,7 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
           <h4>Datos de Obra Social</h4>
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="insuranceNumber">Número de Afiliado *</label>
+              <label htmlFor="insuranceNumber">Número de Afiliado</label>
               <input
                 type="text"
                 id="insuranceNumber"

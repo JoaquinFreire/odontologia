@@ -13,10 +13,12 @@ import {
   Check,
   Save,
   Printer,
-  Download
+  Download,
+  AlertCircle
 } from 'lucide-react';
 import NavBar from '../components/NavBar';
 import { useNavigate } from 'react-router-dom';
+import { saveCompletePatient } from '../services/patientService';
 
 // Importar componentes
 import Odontograma from '../components/PatientRecord/Odontograma';
@@ -24,28 +26,92 @@ import DatosPersonales from '../components/PatientRecord/DatosPersonales';
 import Consentimiento from '../components/PatientRecord/Consentimiento';
 import Anamnesis from '../components/PatientRecord/Anamnesis';
 
-
 const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
-  const [activeTab, setActiveTab] = useState('odontograma');
+  const [activeTab, setActiveTab] = useState('datos');
   const [activeNav, setActiveNav] = useState('dashboard');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
 
   // Datos compartidos entre componentes
   const [patientData, setPatientData] = useState({
-    name: 'María',
-    lastname: 'González',
+    name: '',
+    lastname: '',
+    dni: '',
+    birthDate: '',
+    phone: '',
+    email: '',
+    address: '',
+    occupation: '',
     healthInsurance: {
-      number: '123456789'
+      number: '',
+      isHolder: false
     },
     dentalObservations: '',
     elements: '1'
   });
 
+  const [anamnesisData, setAnamnesisData] = useState({
+    primaryDoctor: '',
+    primaryDoctorPhone: '',
+    primaryService: '',
+    allergies: { hasAllergies: false, description: '' },
+    currentTreatment: { underTreatment: false, description: '' },
+    hospitalization: { wasHospitalized: false, reason: '' },
+    healingProblems: false,
+    bloodType: '',
+    bloodRh: '',
+    takesMedication: false,
+    medication: '',
+    isPregnant: false,
+    pregnancyTime: '',
+    obstetrician: '',
+    obstetricianPhone: '',
+    diseases: {
+      diabetes: false,
+      headaches: false,
+      trauma: false,
+      neurological: false,
+      hypertension: false,
+      epilepsy: false,
+      psoriasis: false,
+      psychiatric: false,
+      rheumaticFever: false,
+      unconsciousness: false,
+      boneDiseases: false,
+      heartDiseases: false,
+      arthritis: false,
+      consumesAlcohol: false,
+      muscleDiseases: false,
+      bloodDiseases: false,
+      asthma: false,
+      consumesTobacco: false,
+      respiratoryDiseases: false,
+      lymphDiseases: false,
+      sinusitis: false,
+      surgeries: false,
+      jointDiseases: false,
+      skinDiseases: false,
+      hepatitis: false,
+      receivedTransfusions: false,
+      kidneyDiseases: false,
+      std: false,
+      liverDiseases: false,
+      receivedDialysis: false,
+      congenitalDiseases: false,
+      chronicInfections: false,
+      chagas: false,
+      operations: false,
+      glandularDiseases: false
+    },
+    observations: ''
+  });
+
   const tabs = [
-    { id: 'odontograma', label: 'Odontograma', icon: <FileText size={20} /> },
     { id: 'datos', label: 'Datos Personales', icon: <User size={20} /> },
-    { id: 'consentimiento', label: 'Consentimiento', icon: <Clipboard size={20} /> },
-    { id: 'anamnesis', label: 'Anamnesis', icon: <Briefcase size={20} /> }
+    { id: 'anamnesis', label: 'Anamnesis', icon: <Briefcase size={20} /> },
+    { id: 'odontograma', label: 'Odontograma', icon: <FileText size={20} /> },
+    { id: 'consentimiento', label: 'Consentimiento', icon: <Clipboard size={20} /> }
   ];
 
   const handleLogout = () => {
@@ -68,6 +134,84 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     }
   };
 
+  const validateRequiredData = () => {
+    const patientErrors = [];
+    const anamnesisErrors = [];
+
+    // Validar datos personales
+    if (!patientData.name) patientErrors.push('Nombre');
+    if (!patientData.lastname) patientErrors.push('Apellido');
+    if (!patientData.dni) patientErrors.push('DNI');
+    if (!patientData.birthDate) patientErrors.push('Fecha de Nacimiento');
+    if (!patientData.phone) patientErrors.push('Teléfono');
+    if (!patientData.email) patientErrors.push('Email');
+
+    // Validar anamnesis
+    const hasAnyDisease = Object.values(anamnesisData.diseases).some(value => value === true);
+    if (!hasAnyDisease) {
+      anamnesisErrors.push('Debe marcar al menos una condición');
+    }
+
+    return {
+      isValid: patientErrors.length === 0 && anamnesisErrors.length === 0,
+      patientErrors,
+      anamnesisErrors
+    };
+  };
+
+  const handleSaveAll = async () => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    const validation = validateRequiredData();
+
+    if (!validation.isValid) {
+      let errorMsg = '✗ Campos requeridos incompletos:\n\n';
+      
+      if (validation.patientErrors.length > 0) {
+        errorMsg += `Datos Personales: ${validation.patientErrors.join(', ')}\n`;
+      }
+      if (validation.anamnesisErrors.length > 0) {
+        errorMsg += `Anamnesis: ${validation.anamnesisErrors.join(', ')}\n`;
+      }
+
+      setMessage({ 
+        type: 'error', 
+        text: errorMsg.replace(/\n/g, ' - ') 
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // ✅ Pasar user.id
+      const result = await saveCompletePatient(patientData, anamnesisData, user.id);
+      
+      if (result.success) {
+        setMessage({ 
+          type: 'success', 
+          text: `✓ ${result.message}` 
+        });
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: `✗ Error: ${result.error}` 
+        });
+      }
+    // eslint-disable-next-line no-unused-vars
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: '✗ Error al guardar el paciente' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'odontograma':
@@ -87,11 +231,11 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
         />;
       case 'anamnesis':
         return <Anamnesis 
-          patientData={patientData} 
-          setPatientData={setPatientData} 
+          anamnesisData={anamnesisData} 
+          setAnamnesisData={setAnamnesisData} 
         />;
       default:
-        return <Odontograma 
+        return <DatosPersonales 
           patientData={patientData} 
           setPatientData={setPatientData} 
         />;
@@ -113,8 +257,8 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
             <div className="patient-header">
               <h1>Ficha del Paciente</h1>
               <div className="patient-subtitle">
-                <span className="patient-name">{patientData.name} {patientData.lastname}</span>
-                <span className="patient-id">ID: #P-{patientData.healthInsurance.number.slice(0, 6)}</span>
+                <span className="patient-name">{patientData.name || 'Nuevo Paciente'} {patientData.lastname}</span>
+                <span className="patient-id">ID: #P-{patientData.healthInsurance.number.slice(0, 6) || 'NUEVO'}</span>
               </div>
             </div>
             <div className="header-actions">
@@ -128,6 +272,14 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               </button>
             </div>
           </div>
+
+          {/* Mensaje de estado */}
+          {message.text && (
+            <div className={`message-alert message-${message.type}`}>
+              <AlertCircle size={18} />
+              <span>{message.text}</span>
+            </div>
+          )}
 
           {/* Pestañas de navegación */}
           <div className="record-tabs">
@@ -202,9 +354,13 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               <button className="btn-text">
                 Guardar y Continuar después
               </button>
-              <button className="btn-primary">
+              <button 
+                className="btn-primary"
+                onClick={handleSaveAll}
+                disabled={loading}
+              >
                 <Save size={18} />
-                <span>Guardar Todo</span>
+                <span>{loading ? 'Guardando...' : 'Guardar Todo'}</span>
               </button>
             </div>
           </div>

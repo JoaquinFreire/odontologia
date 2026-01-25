@@ -46,11 +46,13 @@ const Home = ({ user, handleLogout }) => {
   const loadAllAppointmentData = async () => {
     try {
       console.log('Cargando todos los datos de turnos...');
+      console.log('Usuario actual:', user);
 
+      // ✅ Pasar user.id a cada función
       const [today, overdue, total] = await Promise.all([
-        appointmentService.getTodayAppointments(),
-        appointmentService.getOverdueAppointments(),
-        appointmentService.getTotalPendingAppointments()
+        appointmentService.getTodayAppointments(user.id),
+        appointmentService.getOverdueAppointments(user.id),
+        appointmentService.getTotalPendingAppointments(user.id)
       ]);
 
       setTodayAppointments(today);
@@ -74,7 +76,8 @@ const Home = ({ user, handleLogout }) => {
       setMarkingComplete(id);
       console.log('Marcando turno como atendido:', id);
 
-      await appointmentService.markAppointmentAsCompleted(id);
+      // ✅ Pasar user.id
+      await appointmentService.markAppointmentAsCompleted(id, user.id);
 
       console.log('Turno marcado exitosamente');
       alert('✓ Turno marcado como atendido');
@@ -136,10 +139,11 @@ const Home = ({ user, handleLogout }) => {
       console.log('ID del turno:', selectedAppointmentToReschedule.id);
       console.log('Nueva fecha y hora:', rescheduleData);
 
+      // ✅ Pasar user.id
       await appointmentService.updateAppointment(selectedAppointmentToReschedule.id, {
         date: rescheduleData.date,
         time: rescheduleData.time
-      });
+      }, user.id);
 
       alert('✓ Turno reprogramado exitosamente');
       handleCloseRescheduleModal();
@@ -189,8 +193,10 @@ const Home = ({ user, handleLogout }) => {
     try {
       console.log('=== ENVIANDO TURNO ===');
       console.log('Form data:', formData);
+      console.log('User ID:', user.id);
 
-      await appointmentService.createAppointment(formData);
+      // ✅ Pasar user.id
+      await appointmentService.createAppointment(formData, user.id);
 
       alert(`✓ Turno agendado para ${formData.name} el ${formData.date} a las ${formData.time}`);
       handleCloseModal();
