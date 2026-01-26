@@ -20,12 +20,13 @@ body {
 .sidebar {
   width: 280px;
   height: 100vh;
-  background: linear-gradient(180deg, #1a237e 0%, #283593 100%);
+  background-color: #0066cc;
+  /* background: linear-gradient(180deg, #1a237e 0%, #283593 100%); */
   color: white;
   display: flex;
   flex-direction: column;
   padding: 24px 0;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+  /* box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1); */
 }
 
 .sidebar-header {
@@ -174,7 +175,7 @@ body {
 .content-header h1 {
   font-size: 32px;
   font-weight: 700;
-  color: #1a237e;
+  color: #0052a3;
   margin-bottom: 8px;
 }
 
@@ -186,7 +187,8 @@ body {
 
 /* Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  /* background: linear-gradient(135deg, #1a237e 0%, #283593 100%); */
+  background: #0066cc;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -201,8 +203,9 @@ body {
 }
 
 .btn-primary:hover {
+  background: #0052a3;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(26, 35, 126, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 102, 204, 0.3);
 }
 
 .btn-primary.small {
@@ -212,8 +215,8 @@ body {
 
 .btn-outline {
   background: white;
-  color: #1a237e;
-  border: 2px solid #1a237e;
+  color: #0066cc;
+  border: 2px solid #0066cc;
   padding: 10px 20px;
   border-radius: 10px;
   cursor: pointer;
@@ -225,7 +228,7 @@ body {
 }
 
 .btn-outline:hover {
-  background: #1a237e;
+  background: #0066cc;
   color: white;
   transform: translateY(-2px);
 }
@@ -324,7 +327,7 @@ body {
 .stat-info h3 {
   font-size: 32px;
   font-weight: 700;
-  color: #1a237e;
+  color: #0052a3;
   margin-bottom: 4px;
   line-height: 1;
 }
@@ -377,7 +380,7 @@ body {
 
 .section-title {
   font-size: 20px;
-  color: #1a237e;
+  color: #0052a3;
   margin-bottom: 16px;
   font-weight: 600;
 }
@@ -463,13 +466,13 @@ body {
 
 .card-header h3 {
   font-size: 18px;
-  color: #1a237e;
+  color: #0052a3;
   font-weight: 600;
 }
 
 .badge {
-  background: #e8eaf6;
-  color: #1a237e;
+  background: #e6f2ff;
+  color: #0052a3;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -493,15 +496,15 @@ body {
   grid-template-columns: auto 1fr auto;
   gap: 16px;
   padding: 16px;
-  background: #f8f9fa;
+  background: #f0f7ff;
   border-radius: 12px;
   align-items: center;
   transition: all 0.3s ease;
-  border-left: 4px solid #1976d2;
+  border-left: 4px solid #0066cc;
 }
 
 .home-appointment-item:hover {
-  background: #f0f7ff;
+  background: #e6f2ff;
   transform: translateX(4px);
 }
 
@@ -848,7 +851,7 @@ body {
 
 .modal-header h2 {
   font-size: 20px;
-  color: #1a237e;
+  color: #0052a3;
   font-weight: 700;
   margin: 0;
 }
@@ -924,4 +927,57 @@ body {
   transition: all 0.3s ease;
   border: none;
   font-size: 14px;
+}
+
+/* Success Modal Styles */
+.success-modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  padding: 60px 40px;
+  text-align: center;
+  animation: scaleIn 0.4s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-checkmark {
+  font-size: 80px;
+  color: #22c55e;
+  font-weight: bold;
+  margin-bottom: 24px;
+  animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.success-modal-content h2 {
+  font-size: 24px;
+  color: #0052a3;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.success-modal-content p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
 }
