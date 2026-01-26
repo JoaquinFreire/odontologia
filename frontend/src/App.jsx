@@ -5,6 +5,7 @@ import Pruebajoa from "./pages/pruebajoa";
 import LoginForm from './pages/LoginForm';
 import Home from './pages/Home';
 import Diary from './pages/Diary';
+import ViewPatient from './pages/ViewPatient';
 import PatientRecord from './pages/PatientRecord';
 import Configuration from './pages/Configuration';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -90,7 +91,7 @@ function App() {
           path="/patients" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Diary setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
+              <ViewPatient setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />
