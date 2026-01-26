@@ -144,14 +144,13 @@
 }
 
 .appointment-item {
-  background: linear-gradient(135deg, #0066cc, #0052a3);
-  color: white;
   padding: 6px 8px;
   border-radius: 4px;
   font-size: 11px;
   cursor: pointer;
   transition: all 0.2s ease;
   border-left: 3px solid #fff;
+  color: white;
 }
 
 .appointment-item:hover {
@@ -159,23 +158,35 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.appointment-item.completed {
+/* ✅ Turno de hoy - VERDE */
+.appointment-item.today {
   background: linear-gradient(135deg, #52c41a, #389e0d);
-  opacity: 0.7;
-  text-decoration: line-through;
+  border-left-color: #fff;
 }
 
-.apt-time {
+.appointment-item.today:hover {
+  background: linear-gradient(135deg, #73d13d, #45a049);
+}
+
+/* ✅ Turno futuro - AZUL */
+.appointment-item.future {
+  background: linear-gradient(135deg, #0066cc, #0052a3);
+  border-left-color: #fff;
+}
+
+.appointment-item.future:hover {
+  background: linear-gradient(135deg, #1890ff, #0052a3);
+}
+
+/* ✅ Turno atrasado - ROJO */
+.appointment-item.overdue {
+  background: linear-gradient(135deg, #ff4d4f, #d32f2f);
+  border-left-color: #fff;
   font-weight: 600;
-  font-size: 10px;
-  opacity: 0.9;
 }
 
-.apt-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
+.appointment-item.overdue:hover {
+  background: linear-gradient(135deg, #ff7875, #ff4d4f);
 }
 
 .btn-add-appointment {

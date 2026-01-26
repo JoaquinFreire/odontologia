@@ -14,11 +14,9 @@ import {
   List
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-// import { authService } from '../services/authService';
 import NavBar from '../components/NavBar';
-
 import { appointmentService } from '../services/appointmentService';
-
+import { getStartOfTodayUTC, getEndOfTodayUTC } from '../utils/dateUtils';
 
 const Home = ({ user, handleLogout }) => {
   const [showModal, setShowModal] = useState(false);
@@ -48,7 +46,11 @@ const Home = ({ user, handleLogout }) => {
       console.log('Cargando todos los datos de turnos...');
       console.log('Usuario actual:', user);
 
-      // ✅ Pasar user.id a cada función
+      // Debug: mostrar rangos de fecha
+      const startOfDay = getStartOfTodayUTC();
+      const endOfDay = getEndOfTodayUTC();
+      console.log('Rango de HOY (UTC):', startOfDay, 'a', endOfDay);
+
       const [today, overdue, total] = await Promise.all([
         appointmentService.getTodayAppointments(user.id),
         appointmentService.getOverdueAppointments(user.id),
@@ -96,8 +98,11 @@ const Home = ({ user, handleLogout }) => {
     setSelectedAppointmentToReschedule(appointment);
 
     const appointmentDate = new Date(appointment.datetime);
-    const dateString = appointmentDate.toISOString().split('T')[0];
-    const timeString = appointmentDate.toTimeString().slice(0, 5);
+    // Convertir a fecha local: restar offset de zona horaria
+    const offset = appointmentDate.getTimezoneOffset() * 60000;
+    const localDate = new Date(appointmentDate.getTime() - offset);
+    const dateString = localDate.toISOString().split('T')[0];
+    const timeString = localDate.toISOString().split('T')[1].slice(0, 5);
 
     setRescheduleData({
       date: dateString,

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X, Edit2, Trash2 } from 'lucide-react';
 import { appointmentService } from '../services/appointmentService';
+import { getAppointmentDateLocal, getAppointmentTimeLocal } from '../utils/dateUtils';
 import '../styles/calendar.css';
 
 const Calendar = ({ userId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
+  const [overdueAppointments, setOverdueAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -33,10 +35,19 @@ const Calendar = ({ userId }) => {
     setLoading(true);
     try {
       console.log('Cargando turnos para usuario:', userId);
-      // ✅ Pasar userId
-      const data = await appointmentService.getAppointments(userId);
-      setAppointments(data);
-      console.log('Turnos cargados:', data);
+      // ✅ Obtener turnos pendientes desde hoy
+      const futureData = await appointmentService.getAppointments(userId);
+      
+      // ✅ Obtener turnos atrasados
+      const overdueData = await appointmentService.getOverdueAppointments(userId);
+      
+      // Combinar ambas listas
+      const allAppointments = [...overdueData, ...futureData];
+      
+      setAppointments(allAppointments);
+      setOverdueAppointments(overdueData);
+      console.log('Turnos futuros:', futureData);
+      console.log('Turnos atrasados:', overdueData);
       setError('');
     } catch (err) {
       console.error('Error cargando turnos:', err);
@@ -67,9 +78,38 @@ const Calendar = ({ userId }) => {
       .split('T')[0];
 
     return appointments.filter((apt) => {
-      const aptDate = new Date(apt.datetime).toISOString().split('T')[0];
+      // ✅ Usar getAppointmentDateLocal para compensar timezone
+      const aptDate = getAppointmentDateLocal(apt.datetime);
       return aptDate === dateStr;
     });
+  };
+
+  // ✅ Determinar color del turno según su estado
+  const getAppointmentClass = (appointment) => {
+    // Obtener fecha local del turno en formato YYYY-MM-DD
+    const aptDateLocal = getAppointmentDateLocal(appointment.datetime);
+    
+    // Obtener fecha de hoy en zona horaria LOCAL usando la misma función helper
+    const todayDate = new Date();
+    const todayDateObj = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
+    const offset = todayDateObj.getTimezoneOffset() * 60000;
+    const todayLocalDate = new Date(todayDateObj.getTime() - offset);
+    const todayDateStr = todayLocalDate.toISOString().split('T')[0];
+
+    console.log('Comparando:', { aptDateLocal, todayDateStr, isOverdue: overdueAppointments.some(oap => oap.id === appointment.id) });
+
+    // Si está en la lista de atrasados = rojo
+    if (overdueAppointments.some(oap => oap.id === appointment.id)) {
+      return 'overdue'; // rojo
+    }
+
+    // Si es de hoy = verde
+    if (aptDateLocal === todayDateStr) {
+      return 'today'; // verde
+    }
+
+    // Si es futuro = azul (default)
+    return 'future'; // azul
   };
 
   // Navegar meses
@@ -92,14 +132,13 @@ const Calendar = ({ userId }) => {
   // Abrir modal para editar/crear turno
   const openEditModal = (appointment = null) => {
     if (appointment) {
-      const appointmentDate = new Date(appointment.datetime);
-      const dateStr = appointmentDate.toISOString().split('T')[0];
-      const timeStr = appointmentDate.toTimeString().substring(0, 5);
+      const dateKey = getAppointmentDateLocal(appointment.datetime);
+      const timeKey = getAppointmentTimeLocal(appointment.datetime);
 
       setFormData({
         name: appointment.name,
-        date: dateStr,
-        time: timeStr,
+        date: dateKey,
+        time: timeKey,
         dni: appointment.dni || '',
         type: appointment.type,
       });
@@ -273,9 +312,7 @@ const Calendar = ({ userId }) => {
                     {dayAppointments.map((apt) => (
                       <div
                         key={apt.id}
-                        className={`appointment-item ${
-                          apt.status ? 'completed' : 'pending'
-                        }`}
+                        className={`appointment-item ${getAppointmentClass(apt)}`}
                         onClick={() => {
                           setSelectedAppointment(apt);
                           setIsModalOpen(true);
@@ -283,10 +320,7 @@ const Calendar = ({ userId }) => {
                         }}
                       >
                         <div className="apt-time">
-                          {new Date(apt.datetime).toLocaleTimeString('es-AR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {getAppointmentTimeLocal(apt.datetime)}
                         </div>
                         <div className="apt-name">{apt.name}</div>
                       </div>
