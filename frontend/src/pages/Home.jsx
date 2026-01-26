@@ -332,7 +332,7 @@ const Home = ({ user, handleLogout }) => {
                 {todayAppointments.length > 0 ? (
                   <div className="today-appointments-list">
                     {todayAppointments.map(app => (
-                      <div key={app.id} className="appointment-item today">
+                      <div key={app.id} className="home-appointment-item">
                         <div className="appointment-time">
                           <Clock size={16} />
                           <span>{new Date(app.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>

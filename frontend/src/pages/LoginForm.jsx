@@ -65,7 +65,9 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
       <div className="login-container">
         <div className="login-card">
           <div className="logo-section">
-            <h1 className="clinic-name">ODONTOLOGÍA MONICA</h1>
+            <span className="logo-icon">🦷</span>
+            <h1 className="clinic-name">Odontología</h1>
+            <p className="clinic-subname">Clínica Odontológica Monica</p>
           </div>
           
           {error && <div className="error-message">{error}</div>}
