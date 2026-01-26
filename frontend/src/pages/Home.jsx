@@ -21,6 +21,8 @@ import { getStartOfTodayUTC, getEndOfTodayUTC } from '../utils/dateUtils';
 const Home = ({ user, handleLogout }) => {
   const [showModal, setShowModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [overdueAppointments, setOverdueAppointments] = useState([]);
   const [totalPending, setTotalPending] = useState(0);
@@ -82,9 +84,13 @@ const Home = ({ user, handleLogout }) => {
       await appointmentService.markAppointmentAsCompleted(id, user.id);
 
       console.log('Turno marcado exitosamente');
-      alert('✓ Turno marcado como atendido');
-
-      await loadAllAppointmentData();
+      setShowSuccessModal(true);
+      
+      // Cerrar modal automáticamente después de 3 segundos
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        loadAllAppointmentData();
+      }, 3000);
     } catch (error) {
       console.error('Error al marcar turno:', error);
       alert(`✗ Error: ${error.message}`);
@@ -203,10 +209,15 @@ const Home = ({ user, handleLogout }) => {
       // ✅ Pasar user.id
       await appointmentService.createAppointment(formData, user.id);
 
-      alert(`✓ Turno agendado para ${formData.name} el ${formData.date} a las ${formData.time}`);
+      setSuccessMessage(`Turno agendado para ${formData.name} el ${formData.date} a las ${formData.time}`);
+      setShowSuccessModal(true);
       handleCloseModal();
-
-      await loadAllAppointmentData();
+      
+      // Cerrar modal automáticamente después de 3 segundos
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        loadAllAppointmentData();
+      }, 3000);
     } catch (error) {
       console.error('Error al crear turno:', error);
       alert(`✗ Error: ${error.message}`);
@@ -606,6 +617,17 @@ const Home = ({ user, handleLogout }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Éxito - Turno Marcado o Agendado */}
+      {showSuccessModal && (
+        <div className="modal-overlay" onClick={() => setShowSuccessModal(false)}>
+          <div className="success-modal-content">
+            <div className="success-checkmark">✓</div>
+            <h2>¡Éxito!</h2>
+            <p>{successMessage || 'El turno ha sido registrado exitosamente'}</p>
           </div>
         </div>
       )}
