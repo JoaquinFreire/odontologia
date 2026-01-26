@@ -23,7 +23,7 @@
 }
 
 .clinic-name {
-  color: #2a9d8f;
+  color: #0017c2;
   font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: 1px;
@@ -72,8 +72,8 @@
 
 .input-group input:focus {
   outline: none;
-  border-color: #2a9d8f;
-  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+  border-color: #2525e0;
+  box-shadow: 0 0 0 3px rgba(48, 53, 204, 0.2);
   background-color: white;
 }
 
@@ -83,7 +83,7 @@
 }
 
 .login-button {
-  background-color: #2a9d8f;
+  background-color: #3910eb;
   color: white;
   border: none;
   border-radius: 8px;
@@ -107,15 +107,15 @@
   transform: translateY(1px);
 }
 
-.login-links {
+/* .login-links {
   display: flex;
   justify-content: space-between;
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid #eee;
-}
+} */
 
-.link {
+/* .link {
   color: #2a9d8f;
   text-decoration: none;
   font-weight: 600;
@@ -126,7 +126,7 @@
 .link:hover {
   color: #1d7a6f;
   text-decoration: underline;
-}
+} */
 
 .footer-note {
   margin-top: 30px;

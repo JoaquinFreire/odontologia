@@ -65,7 +65,7 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
       <div className="login-container">
         <div className="login-card">
           <div className="logo-section">
-            <h1 className="clinic-name">ODONTOLOGÍA SONRISAS</h1>
+            <h1 className="clinic-name">ODONTOLOGÍA MONICA</h1>
           </div>
           
           {error && <div className="error-message">{error}</div>}
@@ -87,7 +87,7 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
           
           <form onSubmit={handleSubmit} className="login-form">
             <div className="input-group">
-              <label htmlFor="usuario">Usuario (Email)</label>
+              <label htmlFor="usuario">EMAIL</label>
               <input
                 type="email"
                 id="usuario"
@@ -97,7 +97,6 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
                 required
                 disabled={loading}
               />
-              <small style={{ color: '#999' }}>Valor actual: {usuario || '(vacío)'}</small>
             </div>
             
             <div className="input-group">
@@ -111,7 +110,6 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
                 required
                 disabled={loading}
               />
-              <small style={{ color: '#999' }}>Caracteres: {contrasena.length}</small>
             </div>
             
             <button type="submit" className="login-button" disabled={loading}>
@@ -119,11 +117,7 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
             </button>
           </form>
           
-          <div className="login-links">
-            <a href="#" className="link">Olvidé mi contraseña</a>
-            <a href="#" className="link">Registrarse</a>
-          </div>
-
+          
           {/* Info de debug para desarrollo */}
         </div>
         
