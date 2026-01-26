@@ -156,10 +156,15 @@ const Home = ({ user, handleLogout }) => {
         time: rescheduleData.time
       }, user.id);
 
-      alert('✓ Turno reprogramado exitosamente');
+      setSuccessMessage(`Turno reprogramado para ${selectedAppointmentToReschedule.name} el ${rescheduleData.date} a las ${rescheduleData.time}`);
+      setShowSuccessModal(true);
       handleCloseRescheduleModal();
-
-      await loadAllAppointmentData();
+      
+      // Cerrar modal automáticamente después de 3 segundos
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        loadAllAppointmentData();
+      }, 3000);
     } catch (error) {
       console.error('Error al reprogramar turno:', error);
       alert(`✗ Error: ${error.message}`);
