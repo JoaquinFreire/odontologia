@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Users, FileText, TableConfig, LucideNewspaper } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, UserPlus } from 'lucide-react';
 import { User } from 'lucide-react';
 
 const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
@@ -83,21 +83,11 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
         </button>
 
         <button 
-          className={`nav-item ${activeNav === 'treatments' ? 'active' : ''}`}
-          onClick={() => handleNavClick('treatments', '/treatments')}
-        >
-          <div className="nav-icon">
-            <FileText size={20} />
-          </div>
-          <span>Tratamientos</span>
-        </button>
-
-        <button 
           className={`nav-item ${activeNav === 'newpatient' ? 'active' : ''}`}
           onClick={() => handleNavClick('newpatient', '/newpatient')}
         >
           <div className="nav-icon">
-            <LucideNewspaper size={20} />
+            <UserPlus size={20} />
           </div>
           <span>Nuevo Paciente</span>
         </button>
@@ -107,7 +97,7 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
           onClick={() => handleNavClick('configuration', '/configuration')}
         >
           <div className="nav-icon">
-            <TableConfig size={20} />
+            <Settings size={20} />
           </div>
           <span>Configuración</span>
         </button>

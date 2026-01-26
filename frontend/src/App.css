@@ -488,7 +488,7 @@ body {
   gap: 12px;
 }
 
-.appointment-item.today {
+.home-appointment-item {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 16px;
@@ -500,7 +500,7 @@ body {
   border-left: 4px solid #1976d2;
 }
 
-.appointment-item.today:hover {
+.home-appointment-item:hover {
   background: #f0f7ff;
   transform: translateX(4px);
 }
