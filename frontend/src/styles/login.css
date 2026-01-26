@@ -1,11 +1,38 @@
 .centrar {
-  background-color: #f0f7f9;
+  background-color: #f8fafc;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   padding: 20px;
+  position: relative;
+  overflow: hidden;
 }
+
+.centrar::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 500px;
+  height: 500px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.centrar::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -30%;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
 .login-container {
   display: flex;
   flex-direction: column;
@@ -14,37 +41,92 @@
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .logo-section {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   width: 100%;
+  animation: slideDown 0.6s ease;
+}
+
+.logo-icon {
+  font-size: 60px;
+  margin-bottom: 15px;
+  display: block;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .clinic-name {
-  color: #0017c2;
-  font-size: 1.8rem;
+  color: #0066cc;
+  font-size: 2rem;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  margin-bottom: 10px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  margin: 0;
 }
 
+.clinic-subname{
+  color: #0066ccca;
+  font-weight: 300;
+  
+  margin-top: 6px;
+}
+
+/* .clinic-subtitle {
+  color: #0066ccca;
+  font-size: 0.95rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+  
+} */
 
 .login-card {
   background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  padding: 40px 35px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 45px 40px;
   width: 100%;
+  animation: slideUp 0.6s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .input-group {
@@ -54,111 +136,142 @@
 }
 
 .input-group label {
-  color: #264653;
+  color: #1a237e;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .input-group input {
   padding: 14px 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 2px solid #e8eaf6;
+  border-radius: 10px;
   font-size: 1rem;
   transition: all 0.3s ease;
-  background-color: #f9f9f9;
+  background-color: #f8fafc;
+  font-family: inherit;
 }
 
 .input-group input:focus {
   outline: none;
-  border-color: #2525e0;
-  box-shadow: 0 0 0 3px rgba(48, 53, 204, 0.2);
+  border-color: #0066cc;
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
   background-color: white;
 }
 
+.input-group input:disabled {
+  background-color: #f0f0f0;
+  color: #999;
+}
+
 .input-group input::placeholder {
-  color: #aaa;
-  font-size: 0.9rem;
+  color: #bbb;
+  font-size: 0.95rem;
 }
 
 .login-button {
-  background-color: #3910eb;
+  background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 16px;
   font-size: 1rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   margin-top: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: left 0.3s ease;
 }
 
 .login-button:hover {
-  background-color: #21867a;
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%);
+  box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+  transform: translateY(-2px);
+}
+
+.login-button:hover::before {
+  left: 100%;
 }
 
 .login-button:active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
-/* .login-links {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-} */
-
-/* .link {
-  color: #2a9d8f;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: color 0.3s ease;
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
-
-.link:hover {
-  color: #1d7a6f;
-  text-decoration: underline;
-} */
 
 .footer-note {
   margin-top: 30px;
   text-align: center;
-  color: #888;
-  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
   width: 100%;
 }
 
 .error-message {
   background-color: #ffebee;
   color: #c62828;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
   font-size: 14px;
   border-left: 4px solid #c62828;
+  animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
 }
 
 /* Responsive adjustments */
 @media (max-width: 480px) {
+  .centrar {
+    padding: 16px;
+  }
+
   .login-card {
-    padding: 30px 25px;
+    padding: 35px 25px;
   }
   
   .clinic-name {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
   }
-  
-  .login-links {
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
+
+  .clinic-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .logo-icon {
+    font-size: 48px;
+  }
+
+  .login-form {
+    gap: 16px;
+  }
+
+  .input-group input {
+    padding: 12px 14px;
   }
 }
