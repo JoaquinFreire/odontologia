@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar';
+import TodayAppointments from '../components/AppointmentSections/TodayAppointments';
+import OverdueAppointments from '../components/AppointmentSections/OverdueAppointments';
+import PendingAppointments from '../components/AppointmentSections/PendingAppointments';
 import { appointmentService } from '../services/appointmentService';
 import { getStartOfTodayUTC, getEndOfTodayUTC } from '../utils/dateUtils';
 
@@ -243,10 +246,10 @@ const Home = ({ user, handleLogout }) => {
   };
 
   const quickActions = [
-    { id: 1, icon: <PlusCircle size={24} />, label: 'Agendar Turno', color: '#1a237e', onClick: handleOpenModal },
-    { id: 2, icon: <UserPlus size={24} />, label: 'Nuevo Paciente', color: '#1976d2', onClick: () => navigate('/newpatient') },
-    { id: 3, icon: <CalendarDays size={24} />, label: 'Ver Agenda', color: '#7b1fa2', onClick: () => navigate('/diary') },
-    { id: 4, icon: <List size={24} />, label: 'Ver Pacientes', color: '#388e3c', onClick: () => navigate('/patients') },
+    { id: 1, icon: <PlusCircle size={24} />, label: 'Agendar Turno', color: '#0066cc', onClick: handleOpenModal },
+    { id: 2, icon: <UserPlus size={24} />, label: 'Nuevo Paciente', color: '#0066cc', onClick: () => navigate('/newpatient') },
+    { id: 3, icon: <CalendarDays size={24} />, label: 'Ver Agenda', color: '#0066cc', onClick: () => navigate('/diary') },
+    { id: 4, icon: <List size={24} />, label: 'Ver Pacientes', color: '#0066cc', onClick: () => navigate('/patients') },
   ];
 
   return (
@@ -336,121 +339,32 @@ const Home = ({ user, handleLogout }) => {
           <div className="content-grid">
             {/* Columna izquierda: Turnos de hoy y agenda */}
             <div className="left-column">
-              {/* Turnos de hoy */}
-              <div className="appointments-card">
-                <div className="card-header">
-                  <h3>Turnos de hoy</h3>
-                  <div className="card-header-actions">
-                    <span className="badge">{todayAppointments.length} citas programadas</span>
-                  </div>
-                </div>
+              <TodayAppointments
+                appointments={todayAppointments}
+                markingComplete={markingComplete}
+                onMarkAsCompleted={handleMarkAsCompleted}
+                onOpenRescheduleModal={handleOpenRescheduleModal}
+                onOpenModal={handleOpenModal}
+                formatAppointmentName={formatAppointmentName}
+              />
 
-                {todayAppointments.length > 0 ? (
-                  <div className="today-appointments-list">
-                    {todayAppointments.map(app => (
-                      <div key={app.id} className="home-appointment-item">
-                        <div className="appointment-time">
-                          <Clock size={16} />
-                          <span>{new Date(app.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <div className="appointment-details">
-                          <div className="appointment-patient">
-                            <User size={14} />
-                            <h5>{formatAppointmentName(app)}</h5>
-                          </div>
-                          <p>{app.type}</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            className="btn-outline small"
-                            onClick={() => handleMarkAsCompleted(app.id)}
-                            disabled={markingComplete === app.id}
-                          >
-                            {markingComplete === app.id ? 'Marcando...' : 'Marcar atendido'}
-                          </button>
-                          <button
-                            className="btn-outline small"
-                            onClick={() => handleOpenRescheduleModal(app)}
-                          >
-                            Reprogramar
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty-state">
-                    <AlertCircle size={48} color="#9e9e9e" />
-                    <h4>Sin turnos hoy</h4>
-                    <p>No hay citas programadas para hoy</p>
-                    <button className="btn-outline" onClick={handleOpenModal}>
-                      <PlusCircle size={18} />
-                      <span>Agendar turno</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Turnos atrasados */}
-              {overdueAppointments.length > 0 && (
-                <div className="overdue-card">
-                  <div className="card-header">
-                    <h3>Turnos atrasados</h3>
-                    <div className="badge overdue-badge">Requieren atención</div>
-                  </div>
-                  <div className="overdue-list">
-                    {overdueAppointments.map(app => (
-                      <div key={app.id} className="overdue-item">
-                        <div className="overdue-info">
-                          <XCircle size={16} color="#d32f2f" />
-                          <div>
-                            <h5>{formatAppointmentName(app)}</h5>
-                            <p>Fecha original: {new Date(app.datetime).toLocaleDateString('es-ES')} &nbsp;
-                              <span>{new Date(app.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                            </p>
-                            <small>Tratamiento: {app.type}</small>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-                          <button
-                            className="btn-outline small"
-                            onClick={() => handleMarkAsCompleted(app.id)}
-                            disabled={markingComplete === app.id}
-                          >
-                            {markingComplete === app.id ? 'Marcando...' : 'Marcar atendido'}
-                          </button>
-                          <button
-                            className="btn-outline small"
-                            onClick={() => handleOpenRescheduleModal(app)}
-                          >
-                            Reprogramar
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <OverdueAppointments
+                appointments={overdueAppointments}
+                markingComplete={markingComplete}
+                onMarkAsCompleted={handleMarkAsCompleted}
+                onOpenRescheduleModal={handleOpenRescheduleModal}
+                formatAppointmentName={formatAppointmentName}
+              />
             </div>
 
             {/* Columna derecha */}
             <div className="right-column">
-              <div className="upcoming-card">
-                <div className="card-header">
-                  <h3>Resumen de turnos</h3>
-                </div>
-                <div style={{ padding: '15px' }}>
-                  <div style={{ marginBottom: '15px' }}>
-                    <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>Total pendientes en el sistema: <strong>{totalPending}</strong></p>
-                  </div>
-                  <div style={{ marginBottom: '15px' }}>
-                    <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>Programados para hoy: <strong>{todayAppointments.length}</strong></p>
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, color: '#d32f2f', fontSize: '14px' }}>Turnos atrasados: <strong>{overdueAppointments.length}</strong></p>
-                  </div>
-                </div>
-              </div>
+              <PendingAppointments
+                todayAppointments={todayAppointments}
+                overdueAppointments={overdueAppointments}
+                totalPending={totalPending}
+                formatAppointmentName={formatAppointmentName}
+              />
             </div>
           </div>
         </div>
