@@ -1,11 +1,12 @@
 import React from 'react';
-import { Clock, User, AlertCircle, PlusCircle } from 'lucide-react';
+import { Clock, User, AlertCircle, PlusCircle, Trash2, CheckCircle } from 'lucide-react';
 
 const TodayAppointments = ({
   appointments,
   markingComplete,
   onMarkAsCompleted,
   onOpenRescheduleModal,
+  onDeleteAppointment,
   onOpenModal,
   formatAppointmentName
 }) => {
@@ -14,14 +15,40 @@ const TodayAppointments = ({
       <div className="card-header">
         <h3>Turnos de hoy</h3>
         <div className="card-header-actions">
-          <span className="badge">{appointments.length} citas programadas</span>
+          <span className="badge badge-today">{appointments.length} citas programadas</span>
         </div>
       </div>
+      
+      {appointments.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          marginBottom: '16px',
+          padding: '12px',
+          background: '#f5f5f5',
+          borderRadius: '8px',
+          fontSize: '12px',
+          color: '#666'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <CheckCircle size={16} color="#388e3c" />
+            <span>Atender</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Clock size={16} color="#0066cc" />
+            <span>Reprogramar</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Trash2 size={16} color="#d32f2f" />
+            <span>Eliminar</span>
+          </div>
+        </div>
+      )}
 
       {appointments.length > 0 ? (
         <div className="today-appointments-list">
           {appointments.map(app => (
-            <div key={app.id} className="home-appointment-item">
+            <div key={app.id} className="home-appointment-item today-item">
               <div className="appointment-time">
                 <Clock size={16} />
                 <span>{new Date(app.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -33,19 +60,28 @@ const TodayAppointments = ({
                 </div>
                 <p>{app.type}</p>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button
-                  className="btn-outline small"
+                  className="icon-button"
                   onClick={() => onMarkAsCompleted(app.id)}
                   disabled={markingComplete === app.id}
+                  title="Marcar como atendido"
                 >
-                  {markingComplete === app.id ? 'Marcando...' : 'Marcar atendido'}
+                  <CheckCircle size={18} color={markingComplete === app.id ? '#ccc' : '#388e3c'} />
                 </button>
                 <button
-                  className="btn-outline small"
+                  className="icon-button"
                   onClick={() => onOpenRescheduleModal(app)}
+                  title="Reprogramar turno"
                 >
-                  Reprogramar
+                  <Clock size={18} color="#0066cc" />
+                </button>
+                <button
+                  className="icon-button"
+                  onClick={() => onDeleteAppointment(app.id)}
+                  title="Eliminar turno"
+                >
+                  <Trash2 size={18} color="#d32f2f" />
                 </button>
               </div>
             </div>

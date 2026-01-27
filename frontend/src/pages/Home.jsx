@@ -28,6 +28,7 @@ const Home = ({ user, handleLogout }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [overdueAppointments, setOverdueAppointments] = useState([]);
+  const [nextAppointments, setNextAppointments] = useState([]);
   const [totalPending, setTotalPending] = useState(0);
   const [loading, setLoading] = useState(false);
   const [markingComplete, setMarkingComplete] = useState(null);
@@ -51,32 +52,87 @@ const Home = ({ user, handleLogout }) => {
       console.log('Cargando todos los datos de turnos...');
       console.log('Usuario actual:', user);
 
-      // Debug: mostrar rangos de fecha
-      const startOfDay = getStartOfTodayUTC();
-      const endOfDay = getEndOfTodayUTC();
-      console.log('Rango de HOY (UTC):', startOfDay, 'a', endOfDay);
+      if (!user || !user.id) {
+        console.error('No user found');
+        return;
+      }
 
-      const [today, overdue, total] = await Promise.all([
-        appointmentService.getTodayAppointments(user.id),
-        appointmentService.getOverdueAppointments(user.id),
-        appointmentService.getTotalPendingAppointments(user.id)
-      ]);
+      // Debug: mostrar rangos de fecha
+      const startOfDayStr = getStartOfTodayUTC();
+      const endOfDayStr = getEndOfTodayUTC();
+      const startOfDay = new Date(startOfDayStr);
+      const endOfDay = new Date(endOfDayStr);
+      
+      console.log('Rango de HOY (UTC):', startOfDayStr, 'a', endOfDayStr);
+      console.log('Rango de HOY (Date):', startOfDay, 'a', endOfDay);
+
+      // ✅ Una sola petición para todos los pendientes
+      console.log('Llamando a getAllPendingAppointments...');
+      const allPending = await appointmentService.getAllPendingAppointments(user.id);
+
+      console.log('Todos los pendientes:', allPending);
+      console.log('Cantidad total:', allPending.length);
+
+      if (!allPending || allPending.length === 0) {
+        console.warn('No hay turnos pendientes');
+        setTodayAppointments([]);
+        setOverdueAppointments([]);
+        setNextAppointments([]);
+        setTotalPending(0);
+        return;
+      }
+
+      // 📊 Filtrar en el frontend
+      const today = allPending.filter(app => {
+        const appDate = new Date(app.datetime);
+        const isToday = appDate >= startOfDay && appDate < endOfDay;
+        if (isToday) console.log('Turno HOY:', app.name, appDate);
+        return isToday;
+      });
+
+      const overdue = allPending.filter(app => {
+        const appDate = new Date(app.datetime);
+        const isOverdue = appDate < startOfDay;
+        if (isOverdue) console.log('Turno ATRASADO:', app.name, appDate);
+        return isOverdue;
+      });
+
+      const next = allPending.filter(app => {
+        const appDate = new Date(app.datetime);
+        const isNext = appDate >= endOfDay;
+        if (isNext) console.log('Turno SIGUIENTE:', app.name, appDate);
+        return isNext;
+      });
+
+      console.log('Después del filtrado:');
+      console.log('Turnos de hoy:', today);
+      console.log('Turnos atrasados:', overdue);
+      console.log('Turnos siguientes:', next);
 
       setTodayAppointments(today);
       setOverdueAppointments(overdue);
-      setTotalPending(total);
+      setNextAppointments(next);
+      setTotalPending(allPending.length);
 
-      console.log('Turnos de hoy:', today);
-      console.log('Turnos atrasados:', overdue);
-      console.log('Total pendientes:', total);
     } catch (error) {
       console.error('Error al cargar datos:', error);
+      console.error('Stack:', error.stack);
     }
   };
 
   useEffect(() => {
+    console.log('=== HOME MONTADO ===');
+    console.log('User:', user);
     loadAllAppointmentData();
   }, []);
+
+  useEffect(() => {
+    console.log('=== ESTADO ACTUALIZADO ===');
+    console.log('todayAppointments:', todayAppointments);
+    console.log('overdueAppointments:', overdueAppointments);
+    console.log('nextAppointments:', nextAppointments);
+    console.log('totalPending:', totalPending);
+  }, [todayAppointments, overdueAppointments, nextAppointments, totalPending]);
 
   const handleMarkAsCompleted = async (id) => {
     try {
@@ -99,6 +155,32 @@ const Home = ({ user, handleLogout }) => {
       alert(`✗ Error: ${error.message}`);
     } finally {
       setMarkingComplete(null);
+    }
+  };
+
+  const handleDeleteAppointment = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este turno?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('Eliminando turno:', id);
+
+      await appointmentService.deleteAppointment(id, user.id);
+
+      setSuccessMessage('Turno eliminado exitosamente');
+      setShowSuccessModal(true);
+      
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        loadAllAppointmentData();
+      }, 3000);
+    } catch (error) {
+      console.error('Error al eliminar turno:', error);
+      alert(`✗ Error: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -242,7 +324,7 @@ const Home = ({ user, handleLogout }) => {
 
   const formatAppointmentName = (appointment) => {
     const dniText = appointment.dni ? appointment.dni : '(sin DNI)';
-    return `${appointment.name} - ${dniText}`;
+    return `${appointment.name}  ${dniText}`;
   };
 
   const quickActions = [
@@ -344,6 +426,7 @@ const Home = ({ user, handleLogout }) => {
                 markingComplete={markingComplete}
                 onMarkAsCompleted={handleMarkAsCompleted}
                 onOpenRescheduleModal={handleOpenRescheduleModal}
+                onDeleteAppointment={handleDeleteAppointment}
                 onOpenModal={handleOpenModal}
                 formatAppointmentName={formatAppointmentName}
               />
@@ -353,6 +436,7 @@ const Home = ({ user, handleLogout }) => {
                 markingComplete={markingComplete}
                 onMarkAsCompleted={handleMarkAsCompleted}
                 onOpenRescheduleModal={handleOpenRescheduleModal}
+                onDeleteAppointment={handleDeleteAppointment}
                 formatAppointmentName={formatAppointmentName}
               />
             </div>
@@ -360,9 +444,11 @@ const Home = ({ user, handleLogout }) => {
             {/* Columna derecha */}
             <div className="right-column">
               <PendingAppointments
-                todayAppointments={todayAppointments}
-                overdueAppointments={overdueAppointments}
-                totalPending={totalPending}
+                appointments={nextAppointments}
+                markingComplete={markingComplete}
+                onMarkAsCompleted={handleMarkAsCompleted}
+                onOpenRescheduleModal={handleOpenRescheduleModal}
+                onDeleteAppointment={handleDeleteAppointment}
                 formatAppointmentName={formatAppointmentName}
               />
             </div>

@@ -155,6 +155,30 @@ export const appointmentService = {
     }
   },
 
+  // Obtener todos los turnos pendientes del usuario (para filtrar en frontend)
+  getAllPendingAppointments: async (userId) => {
+    try {
+      console.log('=== OBTENIENDO TODOS LOS TURNOS PENDIENTES ===');
+      console.log('User ID:', userId);
+
+      const { data, error } = await supabase
+        .from('shift')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', false)
+        .order('datetime', { ascending: true });
+
+      console.log('Query error:', error);
+      console.log('All pending appointments:', data);
+
+      if (error) throw new Error(error.message);
+      return data || [];
+    } catch (error) {
+      console.error('Error obteniendo turnos pendientes:', error);
+      return [];
+    }
+  },
+
   // Obtener turnos del usuario actual (solo pendientes, desde hoy en adelante)
   getAppointments: async (userId) => {
     try {
