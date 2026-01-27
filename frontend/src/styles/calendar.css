@@ -111,7 +111,7 @@
 .calendar-day {
   background: white;
   padding: 12px;
-  min-height: 120px;
+  min-height: 140px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -522,3 +522,4 @@
     min-width: auto;
   }
 }
+
