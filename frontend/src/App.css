@@ -200,6 +200,7 @@ body {
   gap: 8px;
   transition: all 0.3s ease;
   font-size: 14px;
+  
 }
 
 .btn-primary:hover {
@@ -236,6 +237,61 @@ body {
 .btn-outline.small {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+.btn-outline.small.btn-danger {
+  color: #d32f2f;
+  border-color: #d32f2f;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-outline.small.btn-danger:hover {
+  background: #d32f2f;
+  color: white;
+}
+
+/* Icon Button Styles */
+.icon-button {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.icon-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  transform: scale(1.15);
+}
+
+.icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.icon-button[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-text {
@@ -484,6 +540,11 @@ body {
   color: #d32f2f;
 }
 
+.badge.badge-today {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
 /* Today Appointments */
 .today-appointments-list {
   display: flex;
@@ -495,7 +556,7 @@ body {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 16px;
-  padding: 16px;
+  padding: 12px;
   background: #f0f7ff;
   border-radius: 12px;
   align-items: center;
@@ -508,14 +569,25 @@ body {
   transform: translateX(4px);
 }
 
+.home-appointment-item.today-item {
+  background: #f1f8e9;
+  border-left-color: #388e3c;
+}
+
+.home-appointment-item.today-item:hover {
+  background: #e8f5e9;
+}
+
 .appointment-time {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   color: #666;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  min-width: 80px;
+  min-width: 60px;
+  width: auto;
+  flex-shrink: 0;
 }
 
 .appointment-details {
@@ -538,6 +610,7 @@ body {
 .appointment-details p {
   font-size: 14px;
   color: #666;
+  
 }
 
 .status-badge {
