@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Users, FileText, Settings, UserPlus } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, UserPlus, Home } from 'lucide-react';
 import { User } from 'lucide-react';
 
 const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
@@ -57,7 +57,7 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
           onClick={() => handleNavClick('dashboard', '/')}
         >
           <div className="nav-icon">
-            <FileText size={20} />
+            <Home size={20} />
           </div>
           <span>Inicio</span>
         </button>
@@ -69,7 +69,7 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
           <div className="nav-icon">
             <Users size={20} />
           </div>
-          <span>Gestión Pacientes</span>
+          <span>Mis Pacientes</span>
         </button>
 
         <button 
