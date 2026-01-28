@@ -1,11 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Users, FileText, Settings, UserPlus, Home } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, UserPlus, Home, Menu, X } from 'lucide-react';
 import { User } from 'lucide-react';
 
 const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Sincronizar activeNav con la ruta actual
   useEffect(() => {
@@ -27,6 +28,7 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
   const handleNavClick = (nav, path) => {
     setActiveNav(nav);
     navigate(path);
+    setIsMenuOpen(false); // Cerrar menú al navegar
   };
 
   const onLogout = async () => {
@@ -42,14 +44,32 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
   };
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <div className="logo">
-          <div className="logo-icon">🦷</div>
-          <h2>Odontología</h2>
+    <>
+      {/* Botón hamburguesa visible en mobile */}
+      <button 
+        className="hamburger-btn"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay para cerrar menú al hacer click */}
+      {isMenuOpen && (
+        <div 
+          className="menu-overlay"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
+      <aside className={`sidebar ${isMenuOpen ? 'menu-open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="logo">
+            <div className="logo-icon">🦷</div>
+            <h2>Odontología</h2>
+          </div>
+          <p className="clinic-subtitle">Clínica Odontológica</p>
         </div>
-        <p className="clinic-subtitle">Clínica Odontológica</p>
-      </div>
 
       <nav className="sidebar-nav">
         <button 
@@ -119,6 +139,7 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
         <p className="footer-text">© 2024 Odontología</p>
       </div>
     </aside>
+    </>
   );
 };
 

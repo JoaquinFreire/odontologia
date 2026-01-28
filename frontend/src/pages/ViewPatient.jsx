@@ -2,20 +2,17 @@ import React, { useState, useMemo, useCallback } from 'react';
 import '../styles/ViewPatient.css';
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar';
+import SearchPatients from '../components/SearchPatients';
+import PatientsTable from '../components/PatientsTable';
+import PaginationControls from '../components/PaginationControls';
 
 // Iconos como componentes de React (FUERA del componente)
-const SearchIcon = () => <span className="icon">🔍</span>;
 const UserIcon = () => <span className="icon">👤</span>;
 const CalendarIcon = () => <span className="icon">📅</span>;
 const FileIcon = () => <span className="icon">📄</span>;
-const EditIcon = () => <span className="icon">✏️</span>;
-const TrashIcon = () => <span className="icon">🗑️</span>;
 const CloseIcon = () => <span className="icon">✕</span>;
-const FilterIcon = () => <span className="icon">⚙️</span>;
-const LeftArrow = () => <span className="icon">‹</span>;
-const RightArrow = () => <span className="icon">›</span>;
 
-// Datos fuera del componente
+// Datos fuera del componente - Más datos de prueba
 const MOCK_PATIENTS = [
     {
         id: 1,
@@ -56,16 +53,131 @@ const MOCK_PATIENTS = [
         lastVisit: '2023-12-20',
         nextAppointment: null,
     },
+    {
+        id: 4,
+        dni: '29745863',
+        name: 'Juan López',
+        age: 55,
+        gender: 'Masculino',
+        phone: '351-321-6547',
+        email: 'juan.lopez@email.com',
+        address: 'Rivadavia 456, Córdoba',
+        bloodType: 'AB+',
+        lastVisit: '2023-11-30',
+        nextAppointment: '2024-03-10',
+    },
+    {
+        id: 5,
+        dni: '32847596',
+        name: 'Laura García',
+        age: 31,
+        gender: 'Femenino',
+        phone: '351-654-9870',
+        email: 'laura.garcia@email.com',
+        address: 'Ayacucho 789, Córdoba',
+        bloodType: 'O-',
+        lastVisit: '2024-01-05',
+        nextAppointment: '2024-02-28',
+    },
+    {
+        id: 6,
+        dni: '27563941',
+        name: 'Roberto Fernández',
+        age: 48,
+        gender: 'Masculino',
+        phone: '351-147-2589',
+        email: 'roberto.fernandez@email.com',
+        address: 'Ituzaingó 321, Córdoba',
+        bloodType: 'B-',
+        lastVisit: '2023-12-15',
+        nextAppointment: null,
+    },
+    {
+        id: 7,
+        dni: '34129873',
+        name: 'Sofía Menéndez',
+        age: 26,
+        gender: 'Femenino',
+        phone: '351-789-4561',
+        email: 'sofia.menendez@email.com',
+        address: 'Vélez Sársfield 654, Córdoba',
+        bloodType: 'A+',
+        lastVisit: '2024-01-12',
+        nextAppointment: '2024-03-05',
+    },
+    {
+        id: 8,
+        dni: '31746258',
+        name: 'Miguel Díaz',
+        age: 39,
+        gender: 'Masculino',
+        phone: '351-456-1234',
+        email: 'miguel.diaz@email.com',
+        address: 'Hipólito Yrigoyen 987, Córdoba',
+        bloodType: 'AB-',
+        lastVisit: '2024-01-08',
+        nextAppointment: '2024-02-15',
+    },
+    {
+        id: 9,
+        dni: '30195847',
+        name: 'Patricia Rojas',
+        age: 52,
+        gender: 'Femenino',
+        phone: '351-258-9630',
+        email: 'patricia.rojas@email.com',
+        address: 'Dorrego 147, Córdoba',
+        bloodType: 'O+',
+        lastVisit: '2023-12-28',
+        nextAppointment: null,
+    },
+    {
+        id: 10,
+        dni: '32458967',
+        name: 'David Ortiz',
+        age: 44,
+        gender: 'Masculino',
+        phone: '351-369-2580',
+        email: 'david.ortiz@email.com',
+        address: 'Castro Barros 258, Córdoba',
+        bloodType: 'A-',
+        lastVisit: '2024-01-02',
+        nextAppointment: '2024-03-15',
+    },
+    {
+        id: 11,
+        dni: '31625439',
+        name: 'Elena Suárez',
+        age: 36,
+        gender: 'Femenino',
+        phone: '351-741-8529',
+        email: 'elena.suarez@email.com',
+        address: 'Pringles 369, Córdoba',
+        bloodType: 'B+',
+        lastVisit: '2023-11-20',
+        nextAppointment: '2024-02-10',
+    },
+    {
+        id: 12,
+        dni: '29834756',
+        name: 'Francisco Peña',
+        age: 51,
+        gender: 'Masculino',
+        phone: '351-852-9630',
+        email: 'francisco.pena@email.com',
+        address: 'Bolívar 741, Córdoba',
+        bloodType: 'AB+',
+        lastVisit: '2023-12-05',
+        nextAppointment: null,
+    },
 ];
 
 const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
     // Estado para pacientes
     const [patients, setPatients] = useState(MOCK_PATIENTS);
 
-
-    // Estado para filtros y búsqueda
+    // Estado para búsqueda
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchBy, setSearchBy] = useState('name'); // 'name' o 'dni'
 
     // Estado para modales
     const [showMedicalHistoryModal, setShowMedicalHistoryModal] = useState(false);
@@ -86,7 +198,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
 
     // Estado para paginación
     const [currentPage, setCurrentPage] = useState(1);
-    const [patientsPerPage] = useState(10);
+    const [patientsPerPage] = useState(5);
     const [activeNav, setActiveNav] = useState('dashboard');
     const navigate = useNavigate();
 
@@ -129,26 +241,31 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
     // Manejar búsqueda
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
+        setCurrentPage(1); // Volver a la primera página al buscar
     };
+    
+    // Detectar automáticamente si es DNI o nombre
+    const detectSearchType = () => {
+        if (!searchTerm.trim()) return null;
+        // Si contiene solo dígitos, es un DNI
+        return /^\d+$/.test(searchTerm) ? 'dni' : 'name';
+    };
+    
     // CALCULAR PACIENTES FILTRADOS CON useMemo
     const filteredPatients = useMemo(() => {
         if (!searchTerm.trim()) {
             return patients;
         }
 
+        const searchType = detectSearchType();
         return patients.filter(patient => {
-            if (searchBy === 'name') {
-                return patient.name.toLowerCase().includes(searchTerm.toLowerCase());
-            } else {
+            if (searchType === 'dni') {
                 return patient.dni.includes(searchTerm);
+            } else {
+                return patient.name.toLowerCase().includes(searchTerm.toLowerCase());
             }
         });
-    }, [searchTerm, searchBy, patients]); // Dependencias
-
-    // Manejar cambio de filtro
-    const handleFilterChange = (filter) => {
-        setSearchBy(filter);
-    };
+    }, [searchTerm, patients]);
 
     // Abrir modal de historial clínico
     const openMedicalHistory = (patient) => {
@@ -208,199 +325,29 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                     </div>
 
                     {/* Barra de búsqueda y filtros */}
-                    <div className="search-section">
-                        <div className="search-container">
-                            <div className="search-input-wrapper">
-                                <div className="search-icon-container">
-                                    <SearchIcon />
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder={`Buscar por ${searchBy === 'name' ? 'nombre' : 'DNI'}...`}
-                                    value={searchTerm}
-                                    onChange={handleSearch}
-                                    className="search-input"
-                                />
-                            </div>
-
-                            <div className="filters-container">
-                                <div className="filter-buttons">
-                                    <FilterIcon />
-                                    <span className="filter-label">Filtrar por:</span>
-                                    <button
-                                        onClick={() => handleFilterChange('name')}
-                                        className={`filter-btn ${searchBy === 'name' ? 'active' : ''}`}
-                                    >
-                                        Nombre
-                                    </button>
-                                    <button
-                                        onClick={() => handleFilterChange('dni')}
-                                        className={`filter-btn ${searchBy === 'dni' ? 'active' : ''}`}
-                                    >
-                                        DNI
-                                    </button>
-                                </div>
-
-                                <button className="new-patient-btn">
-                                    <UserIcon />
-                                    Nuevo Paciente
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Estadísticas */}
-                        <div className="stats-grid">
-                            <div className="stat-card blue">
-                                <p className="stat-label">Total Pacientes</p>
-                                <p className="stat-value">{patients.length}</p>
-                            </div>
-                            <div className="stat-card green">
-                                <p className="stat-label">Pacientes Activos</p>
-                                <p className="stat-value">
-                                    {patients.filter(p => p.status === 'Activo').length}
-                                </p>
-                            </div>
-                            <div className="stat-card yellow">
-                                <p className="stat-label">Turnos Hoy</p>
-                                <p className="stat-value">3</p>
-                            </div>
-                            <div className="stat-card purple">
-                                <p className="stat-label">Nuevos Este Mes</p>
-                                <p className="stat-value">12</p>
-                            </div>
-                        </div>
-                    </div>
+                    <SearchPatients 
+                        searchTerm={searchTerm}
+                        onSearchChange={handleSearch}
+                    />
 
                     {/* Tabla de pacientes */}
-                    <div className="patients-table-container">
-                        <div className="table-wrapper">
-                            <table className="patients-table">
-                                <thead>
-                                    <tr>
-                                        <th>DNI</th>
-                                        <th>Paciente</th>
-                                        <th>Contacto</th>
-                                        <th>Última Visita</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {currentPatients.map((patient) => (
-                                        <tr key={patient.id}>
-                                            <td>
-                                                <span className="dni-text">{patient.dni}</span>
-                                            </td>
-                                            <td>
-                                                <div className="patient-info">
-                                                    <div className="patient-avatar">
-                                                        <UserIcon />
-                                                    </div>
-                                                    <div className="patient-details">
-                                                        <div className="patient-name">{patient.name}</div>
-                                                        <div className="patient-meta">{patient.age} años • {patient.gender}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="contact-info">
-                                                    <div>{patient.phone}</div>
-                                                    <div className="email-text">{patient.email}</div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {patient.nextAppointment ? (
-                                                    <span className="appointment-badge">
-                                                        {formatDate(patient.nextAppointment)}
-                                                    </span>
-                                                ) : (
-                                                    <span className="no-appointment">Sin turno</span>
-                                                )}
-                                            </td>
-                                            
-                                            <td>
-                                                <div className="action-buttons">
-                                                    <button
-                                                        onClick={() => openPatientDetails(patient)}
-                                                        className="action-btn details-btn"
-                                                        title="Ver detalles"
-                                                    >
-                                                        <UserIcon />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openMedicalHistory(patient)}
-                                                        className="action-btn history-btn"
-                                                        title="Historial clínico"
-                                                    >
-                                                        <FileIcon />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openAppointmentModal(patient)}
-                                                        className="action-btn appointment-btn"
-                                                        title="Agendar turno"
-                                                    >
-                                                        <CalendarIcon />
-                                                    </button>
-                                                    <button className="action-btn edit-btn" title="Editar">
-                                                        <EditIcon />
-                                                    </button>
-                                                    <button className="action-btn delete-btn" title="Eliminar">
-                                                        <TrashIcon />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                    <PatientsTable 
+                        patients={currentPatients}
+                        onViewDetails={openPatientDetails}
+                        onViewMedicalHistory={openMedicalHistory}
+                        onScheduleAppointment={openAppointmentModal}
+                    />
 
-                        {/* Paginación */}
-                        {filteredPatients.length > 0 && (
-                            <div className="pagination-container">
-                                <div className="pagination-info">
-                                    Mostrando {indexOfFirstPatient + 1} a {Math.min(indexOfLastPatient, filteredPatients.length)} de {filteredPatients.length} pacientes
-                                </div>
-                                <div className="pagination-buttons">
-                                    <button
-                                        onClick={() => paginate(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                        className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
-                                    >
-                                        <LeftArrow />
-                                    </button>
-
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                                        <button
-                                            key={number}
-                                            onClick={() => paginate(number)}
-                                            className={`page-number ${currentPage === number ? 'active' : ''}`}
-                                        >
-                                            {number}
-                                        </button>
-                                    ))}
-
-                                    <button
-                                        onClick={() => paginate(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                        className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
-                                    >
-                                        <RightArrow />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Sin resultados */}
-                        {filteredPatients.length === 0 && (
-                            <div className="no-results">
-                                <div className="no-results-icon">
-                                    <UserIcon />
-                                </div>
-                                <h3>No se encontraron pacientes</h3>
-                                <p>Intenta con otros términos de búsqueda</p>
-                            </div>
-                        )}
-                    </div>
+                    {/* Paginación */}
+                    {filteredPatients.length > 0 && (
+                        <PaginationControls 
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            filteredPatientsCount={filteredPatients.length}
+                            patientsPerPage={patientsPerPage}
+                            onPageChange={paginate}
+                        />
+                    )}
 
                     {/* Modal - Historial Clínico */}
                     {showMedicalHistoryModal && selectedPatient && (

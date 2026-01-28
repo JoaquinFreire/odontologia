@@ -162,7 +162,13 @@ const Calendar = ({ userId }) => {
       </div>
 
       <div className="calendar-weekdays">
-        {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => <div key={d} className="weekday">{d}</div>)}
+        {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((d, index) => {
+          const today = new Date();
+          const isToday = index === today.getDay();
+          return (
+            <div key={d} className={`weekday ${isToday ? 'today' : ''}`}>{d}</div>
+          );
+        })}
       </div>
 
       <div className="calendar-grid">
