@@ -24,7 +24,7 @@ export const authService = {
         .select('id, email, name, lastname, tuition, auth_user_id')
         .eq('auth_user_id', authData.user.id) // ← Filtra por tu UUID de Auth
         .single(); // ← Espera UNA fila (si hay más, error)
-
+console.log('User data fetch result:', userData, userError);
       if (userError) throw userError;
 
       console.log('✔ Datos del usuario obtenidos');

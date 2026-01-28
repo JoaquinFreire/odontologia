@@ -295,8 +295,8 @@ body {
 }
 
 .btn-text {
-  background: #0352ef;
-  color: #ededed;
+  background: #f5f8ff;
+  color: #06c;
   border: none;
   padding: 8px 16px;
   cursor: pointer;
@@ -306,7 +306,7 @@ body {
 }
 
 .btn-text:hover {
-  background: #910000;
+  background: #ec1414;
   color: #eaebf7;
   transform: translateY(-1px);
 }

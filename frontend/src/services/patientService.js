@@ -249,19 +249,57 @@ export const updatePatientAnamnesis = async (patientId, anamnesisData) => {
   }
 };
 
-// Obtener todos los pacientes del usuario actual
-export const getAllPatients = async (userId) => {
+// Obtener todos los pacientes del usuario actual CON PAGINACIÓN
+export const getAllPatients = async (userId, page = 1, pageSize = 10) => {
   try {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    // Obtener el total de pacientes
+    const { count, error: countError } = await supabase
+      .from('patient')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (countError) throw countError;
+
+    // Obtener los pacientes de la página actual
     const { data, error } = await supabase
       .from('patient')
       .select('*')
       .eq('user_id', userId)
-      .order('id', { ascending: false });
+      .order('id', { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
-    return { success: true, data };
+
+    const totalPages = Math.ceil(count / pageSize);
+
+    return { 
+      success: true, 
+      data,
+      pagination: {
+        currentPage: page,
+        pageSize,
+        totalPatients: count,
+        totalPages
+      }
+    };
   } catch (error) {
     console.error('Error al obtener pacientes:', error);
     return { success: false, error: error.message };
   }
+};
+
+// Función auxiliar para calcular edad
+export const calculateAge = (birthdate) => {
+  if (!birthdate) return null;
+  const today = new Date();
+  const birth = new Date(birthdate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
 };

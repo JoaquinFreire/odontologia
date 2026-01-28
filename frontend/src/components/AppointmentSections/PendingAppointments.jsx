@@ -66,21 +66,21 @@ const PendingAppointments = ({
                   disabled={markingComplete === app.id}
                   title="Marcar como atendido"
                 >
-                  <CheckCircle size={18} color={markingComplete === app.id ? '#ccc' : '#388e3c'} />
+                  <CheckCircle size={22} color={markingComplete === app.id ? '#ccc' : '#388e3c'} />
                 </button>
                 <button
                   className="icon-button"
                   onClick={() => onOpenRescheduleModal(app)}
                   title="Reprogramar turno"
                 >
-                  <Clock size={18} color="#0066cc" />
+                  <Clock size={22} color="#0066cc" />
                 </button>
                 <button
                   className="icon-button"
                   onClick={() => onDeleteAppointment(app.id)}
                   title="Eliminar turno"
                 >
-                  <Trash2 size={18} color="#d32f2f" />
+                  <Trash2 size={22} color="#d32f2f" />
                 </button>
               </div>
             </div>
