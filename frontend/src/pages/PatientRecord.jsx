@@ -107,6 +107,13 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     observations: ''
   });
 
+  const [consentData, setConsentData] = useState({
+    accepted: false,
+    datetime: new Date().toISOString().slice(0, 16),
+    doctorName: '',
+    doctorMatricula: ''
+  });
+
   const tabs = [
     { id: 'datos', label: 'Datos Personales', icon: <User size={20} /> },
     { id: 'anamnesis', label: 'Anamnesis', icon: <Briefcase size={20} /> },
@@ -137,6 +144,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
   const validateRequiredData = () => {
     const patientErrors = [];
     const anamnesisErrors = [];
+    const consentErrors = [];
 
     // Validar datos personales
     if (!patientData.name) patientErrors.push('Nombre');
@@ -152,10 +160,16 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       anamnesisErrors.push('Debe marcar al menos una condición');
     }
 
+    // Validar consentimiento
+    if (!consentData.accepted) {
+      consentErrors.push('Debe aceptar el consentimiento');
+    }
+
     return {
-      isValid: patientErrors.length === 0 && anamnesisErrors.length === 0,
+      isValid: patientErrors.length === 0 && anamnesisErrors.length === 0 && consentErrors.length === 0,
       patientErrors,
-      anamnesisErrors
+      anamnesisErrors,
+      consentErrors
     };
   };
 
@@ -174,18 +188,25 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       if (validation.anamnesisErrors.length > 0) {
         errorMsg += `Anamnesis: ${validation.anamnesisErrors.join(', ')}\n`;
       }
+      if (validation.consentErrors.length > 0) {
+        errorMsg += `Consentimiento: ${validation.consentErrors.join(', ')}\n`;
+      }
 
       setMessage({ 
         type: 'error', 
-        text: errorMsg.replace(/\n/g, ' - ') 
+        text: errorMsg.replace(/\n/g, ' | ') 
       });
       setLoading(false);
       return;
     }
 
     try {
-      // ✅ Pasar user.id
-      const result = await saveCompletePatient(patientData, anamnesisData, user.id);
+      console.log('=== GUARDANDO PACIENTE COMPLETO ===');
+      console.log('Datos del paciente:', patientData);
+      console.log('Datos de consentimiento:', consentData);
+      console.log('User ID:', user.id);
+
+      const result = await saveCompletePatient(patientData, anamnesisData, consentData, user.id);
       
       if (result.success) {
         setMessage({ 
@@ -201,11 +222,11 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
           text: `✗ Error: ${result.error}` 
         });
       }
-    // eslint-disable-next-line no-unused-vars
     } catch (error) {
+      console.error('Error al guardar:', error);
       setMessage({ 
         type: 'error', 
-        text: '✗ Error al guardar el paciente' 
+        text: `✗ Error: ${error.message}` 
       });
     } finally {
       setLoading(false);
@@ -226,8 +247,10 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
         />;
       case 'consentimiento':
         return <Consentimiento 
-          patientData={patientData} 
-          setPatientData={setPatientData} 
+          patientData={patientData}
+          user={user}
+          consentData={consentData}
+          setConsentData={setConsentData}
         />;
       case 'anamnesis':
         return <Anamnesis 

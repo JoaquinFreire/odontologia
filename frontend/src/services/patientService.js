@@ -58,9 +58,11 @@ export const getPatient = async (patientId, userId) => {
   }
 };
 
-// Guardar paciente completo (paciente + anamnesis)
-export const saveCompletePatient = async (patientData, anamnesisData, userId) => {
+// Guardar paciente completo (paciente + anamnesis + consentimiento)
+export const saveCompletePatient = async (patientData, anamnesisData, consentData, userId) => {
   try {
+    console.log('=== INICIANDO GUARDADO ===');
+    
     // Validar datos del paciente
     if (!patientData.name || !patientData.lastname || !patientData.dni) {
       return { 
@@ -78,7 +80,16 @@ export const saveCompletePatient = async (patientData, anamnesisData, userId) =>
       };
     }
 
+    // Validar consentimiento
+    if (!consentData?.accepted) {
+      return {
+        success: false,
+        error: 'Debe aceptar el consentimiento informado'
+      };
+    }
+
     // 1. Guardar paciente con user_id
+    console.log('Guardando paciente...');
     const { data: patientDataSaved, error: patientError } = await supabase
       .from('patient')
       .insert([
@@ -93,7 +104,7 @@ export const saveCompletePatient = async (patientData, anamnesisData, userId) =>
           occupation: patientData.occupation || '',
           affiliate_number: patientData.healthInsurance?.number || '',
           holder: patientData.healthInsurance?.isHolder || false,
-          user_id: userId // ← Agregar user_id
+          user_id: userId
         }
       ])
       .select();
@@ -101,8 +112,10 @@ export const saveCompletePatient = async (patientData, anamnesisData, userId) =>
     if (patientError) throw patientError;
 
     const newPatientId = patientDataSaved[0].id;
+    console.log('Paciente guardado con ID:', newPatientId);
 
-    // 2. Preparar datos de anamnesis
+    // 2. Guardar anamnesis CON observaciones
+    console.log('Guardando anamnesis...');
     const anamnesisPayload = {
       patient_id: newPatientId,
       alergico: anamnesisData.allergies.hasAllergies || false,
@@ -122,21 +135,42 @@ export const saveCompletePatient = async (patientData, anamnesisData, userId) =>
       obstetra_tel: anamnesisData.obstetricianPhone || null,
       medicamento: anamnesisData.takesMedication || false,
       medicamento_detalles: anamnesisData.medication || null,
-      antecedentes: anamnesisData.diseases
+      antecedentes: anamnesisData.diseases,
+      observaciones: anamnesisData.observations || null
     };
 
-    // 3. Guardar anamnesis
     const { data: anamnesisDataSaved, error: anamnesisError } = await supabase
       .from('anamnesis_answers')
       .insert([anamnesisPayload])
       .select();
 
     if (anamnesisError) throw anamnesisError;
+    console.log('Anamnesis guardada');
+
+    // 3. Guardar consentimiento CON datos completos
+    console.log('Guardando consentimiento...');
+    const consentPayload = {
+      patient_id: newPatientId,
+      text: `En este acto, yo ${patientData.name} ${patientData.lastname} DNI ${patientData.dni} autorizo a Od ${consentData.doctorName || 'No especificado'} M.P. ${consentData.doctorMatricula || 'No especificada'} y/o asociados o ayudantes a realizar el tratamiento informado, conversado con el profesional sobre la naturaleza y propósito del tratamiento, sobre la posibilidad de complicaciones, los riesgos y administración de anestesia local, práctica, radiografías y otros métodos de diagnóstico.`,
+      datetime: consentData.datetime || new Date().toISOString(),
+      accepted: consentData.accepted || false
+    };
+
+    console.log('Payload del consentimiento:', consentPayload);
+
+    const { data: consentDataSaved, error: consentError } = await supabase
+      .from('consent')
+      .insert([consentPayload])
+      .select();
+
+    if (consentError) throw consentError;
+    console.log('Consentimiento guardado');
 
     return { 
       success: true, 
       patient: patientDataSaved[0],
       anamnesis: anamnesisDataSaved[0],
+      consent: consentDataSaved[0],
       message: `Paciente ${patientDataSaved[0].name} ${patientDataSaved[0].lastname} guardado exitosamente con su historia clínica`
     };
   } catch (error) {
@@ -221,7 +255,7 @@ export const getAllPatients = async (userId) => {
     const { data, error } = await supabase
       .from('patient')
       .select('*')
-      .eq('user_id', userId) // ← Filtrar por usuario
+      .eq('user_id', userId)
       .order('id', { ascending: false });
 
     if (error) throw error;
