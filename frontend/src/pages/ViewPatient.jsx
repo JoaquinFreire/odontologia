@@ -1,206 +1,84 @@
-import React, { useState, useMemo, useCallback } from 'react';
+// eslint-disable-next-line no-unused-vars
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import '../styles/ViewPatient.css';
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import SearchPatients from '../components/SearchPatients';
 import PatientsTable from '../components/PatientsTable';
 import PaginationControls from '../components/PaginationControls';
+import { getAllPatients, calculateAge } from '../services/patientService';
+import { appointmentService } from '../services/appointmentService';
 
-// Iconos como componentes de React (FUERA del componente)
+// Iconos como componentes de React
 const UserIcon = () => <span className="icon">👤</span>;
 const CalendarIcon = () => <span className="icon">📅</span>;
-const FileIcon = () => <span className="icon">📄</span>;
 const CloseIcon = () => <span className="icon">✕</span>;
-
-// Datos fuera del componente - Más datos de prueba
-const MOCK_PATIENTS = [
-    {
-        id: 1,
-        dni: '30568974',
-        name: 'María González',
-        age: 35,
-        gender: 'Femenino',
-        phone: '351-456-7890',
-        email: 'maria.gonzalez@email.com',
-        address: 'Av. Colón 1234, Córdoba',
-        bloodType: 'O+',
-        lastVisit: '2024-01-15',
-        nextAppointment: '2024-02-20',
-    },
-    {
-        id: 2,
-        dni: '28956321',
-        name: 'Carlos Rodríguez',
-        age: 42,
-        gender: 'Masculino',
-        phone: '351-789-1234',
-        email: 'carlos.rodriguez@email.com',
-        address: 'San Martín 567, Córdoba',
-        bloodType: 'A-',
-        lastVisit: '2024-01-10',
-        nextAppointment: '2024-02-25',
-    },
-    {
-        id: 3,
-        dni: '33458712',
-        name: 'Ana Martínez',
-        age: 28,
-        gender: 'Femenino',
-        phone: '351-234-5678',
-        email: 'ana.martinez@email.com',
-        address: 'Belgrano 890, Córdoba',
-        bloodType: 'B+',
-        lastVisit: '2023-12-20',
-        nextAppointment: null,
-    },
-    {
-        id: 4,
-        dni: '29745863',
-        name: 'Juan López',
-        age: 55,
-        gender: 'Masculino',
-        phone: '351-321-6547',
-        email: 'juan.lopez@email.com',
-        address: 'Rivadavia 456, Córdoba',
-        bloodType: 'AB+',
-        lastVisit: '2023-11-30',
-        nextAppointment: '2024-03-10',
-    },
-    {
-        id: 5,
-        dni: '32847596',
-        name: 'Laura García',
-        age: 31,
-        gender: 'Femenino',
-        phone: '351-654-9870',
-        email: 'laura.garcia@email.com',
-        address: 'Ayacucho 789, Córdoba',
-        bloodType: 'O-',
-        lastVisit: '2024-01-05',
-        nextAppointment: '2024-02-28',
-    },
-    {
-        id: 6,
-        dni: '27563941',
-        name: 'Roberto Fernández',
-        age: 48,
-        gender: 'Masculino',
-        phone: '351-147-2589',
-        email: 'roberto.fernandez@email.com',
-        address: 'Ituzaingó 321, Córdoba',
-        bloodType: 'B-',
-        lastVisit: '2023-12-15',
-        nextAppointment: null,
-    },
-    {
-        id: 7,
-        dni: '34129873',
-        name: 'Sofía Menéndez',
-        age: 26,
-        gender: 'Femenino',
-        phone: '351-789-4561',
-        email: 'sofia.menendez@email.com',
-        address: 'Vélez Sársfield 654, Córdoba',
-        bloodType: 'A+',
-        lastVisit: '2024-01-12',
-        nextAppointment: '2024-03-05',
-    },
-    {
-        id: 8,
-        dni: '31746258',
-        name: 'Miguel Díaz',
-        age: 39,
-        gender: 'Masculino',
-        phone: '351-456-1234',
-        email: 'miguel.diaz@email.com',
-        address: 'Hipólito Yrigoyen 987, Córdoba',
-        bloodType: 'AB-',
-        lastVisit: '2024-01-08',
-        nextAppointment: '2024-02-15',
-    },
-    {
-        id: 9,
-        dni: '30195847',
-        name: 'Patricia Rojas',
-        age: 52,
-        gender: 'Femenino',
-        phone: '351-258-9630',
-        email: 'patricia.rojas@email.com',
-        address: 'Dorrego 147, Córdoba',
-        bloodType: 'O+',
-        lastVisit: '2023-12-28',
-        nextAppointment: null,
-    },
-    {
-        id: 10,
-        dni: '32458967',
-        name: 'David Ortiz',
-        age: 44,
-        gender: 'Masculino',
-        phone: '351-369-2580',
-        email: 'david.ortiz@email.com',
-        address: 'Castro Barros 258, Córdoba',
-        bloodType: 'A-',
-        lastVisit: '2024-01-02',
-        nextAppointment: '2024-03-15',
-    },
-    {
-        id: 11,
-        dni: '31625439',
-        name: 'Elena Suárez',
-        age: 36,
-        gender: 'Femenino',
-        phone: '351-741-8529',
-        email: 'elena.suarez@email.com',
-        address: 'Pringles 369, Córdoba',
-        bloodType: 'B+',
-        lastVisit: '2023-11-20',
-        nextAppointment: '2024-02-10',
-    },
-    {
-        id: 12,
-        dni: '29834756',
-        name: 'Francisco Peña',
-        age: 51,
-        gender: 'Masculino',
-        phone: '351-852-9630',
-        email: 'francisco.pena@email.com',
-        address: 'Bolívar 741, Córdoba',
-        bloodType: 'AB+',
-        lastVisit: '2023-12-05',
-        nextAppointment: null,
-    },
-];
 
 const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
     // Estado para pacientes
-    const [patients, setPatients] = useState(MOCK_PATIENTS);
-
-    // Estado para búsqueda
+    const [patients, setPatients] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Estado para modales
-    const [showMedicalHistoryModal, setShowMedicalHistoryModal] = useState(false);
-    const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-    const [showPatientDetails, setShowPatientDetails] = useState(false);
+    // Paginación
+    const [currentPage, setCurrentPage] = useState(1);
+    const [patientsPerPage] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalPatients, setTotalPatients] = useState(0);
 
-    // Estado para paciente seleccionado
+    // Modales
+    const [showPatientDetails, setShowPatientDetails] = useState(false);
+    const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+
+    // Paciente seleccionado
     const [selectedPatient, setSelectedPatient] = useState(null);
 
-    // Estado para nuevo turno
-    const [newAppointment, setNewAppointment] = useState({
+    // Formulario de turno
+    const [appointmentFormData, setAppointmentFormData] = useState({
+        name: '',
         date: '',
         time: '',
-        reason: 'Consulta general',
-        doctor: 'Dr. García',
-        notes: ''
+        type: '',
+        dni: ''
     });
+    const [schedulingAppointment, setSchedulingAppointment] = useState(false);
 
-    // Estado para paginación
-    const [currentPage, setCurrentPage] = useState(1);
-    const [patientsPerPage] = useState(5);
-    const [activeNav, setActiveNav] = useState('dashboard');
+    const [activeNav, setActiveNav] = useState('patients');
     const navigate = useNavigate();
+
+    // Cargar pacientes cuando cambia la página o el usuario
+    useEffect(() => {
+        const loadPatients = async () => {
+            if (!user || !user.id) {
+                console.error('No user found');
+                return;
+            }
+
+            try {
+                setLoading(true);
+                console.log(`Cargando pacientes - página ${currentPage}`);
+                
+                const result = await getAllPatients(user.id, currentPage, patientsPerPage);
+                
+                if (result.success) {
+                    setPatients(result.data);
+                    setTotalPages(result.pagination.totalPages);
+                    setTotalPatients(result.pagination.totalPatients);
+                    console.log('Pacientes cargados:', result.data.length);
+                    console.log('Total de pacientes:', result.pagination.totalPatients);
+                    console.log('Total de páginas:', result.pagination.totalPages);
+                } else {
+                    console.error('Error al cargar pacientes:', result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadPatients();
+    }, [user, currentPage, patientsPerPage]);
 
     const handleLogout = () => {
         setIsAuthenticated(false);
@@ -208,50 +86,19 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
         navigate('/login');
     };
 
-    // Crear nuevo turno con useCallback para estabilizar la referencia
-    const handleCreateAppointment = useCallback(() => {
-        if (!newAppointment.date || !newAppointment.time) {
-            alert('Por favor, complete fecha y hora');
-            return;
-        }
-
-        // Aquí iría la lógica para guardar el turno en la API
-        alert(`Turno agendado para ${selectedPatient.name} el ${newAppointment.date} a las ${newAppointment.time}`);
-
-        // Actualizar paciente con nuevo turno
-        setPatients(prevPatients =>
-            prevPatients.map(p =>
-                p.id === selectedPatient.id
-                    ? { ...p, nextAppointment: `${newAppointment.date} ${newAppointment.time}` }
-                    : p
-            )
-        );
-
-        setShowAppointmentModal(false);
-        setNewAppointment({
-            date: '',
-            time: '',
-            reason: '',
-            doctor: '',
-            notes: ''
-        });
-    }, [newAppointment, selectedPatient]);
-
-
-    // Manejar búsqueda
+    // Manejar búsqueda (filtrado local de los 10 pacientes actuales)
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
-        setCurrentPage(1); // Volver a la primera página al buscar
+        setCurrentPage(1);
     };
-    
+
     // Detectar automáticamente si es DNI o nombre
     const detectSearchType = () => {
         if (!searchTerm.trim()) return null;
-        // Si contiene solo dígitos, es un DNI
         return /^\d+$/.test(searchTerm) ? 'dni' : 'name';
     };
-    
-    // CALCULAR PACIENTES FILTRADOS CON useMemo
+
+    // FILTRAR PACIENTES LOCALMENTE (de los 10 cargados)
     const filteredPatients = useMemo(() => {
         if (!searchTerm.trim()) {
             return patients;
@@ -262,29 +109,11 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
             if (searchType === 'dni') {
                 return patient.dni.includes(searchTerm);
             } else {
-                return patient.name.toLowerCase().includes(searchTerm.toLowerCase());
+                return patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       patient.lastname.toLowerCase().includes(searchTerm.toLowerCase());
             }
         });
     }, [searchTerm, patients]);
-
-    // Abrir modal de historial clínico
-    const openMedicalHistory = (patient) => {
-        setSelectedPatient(patient);
-        setShowMedicalHistoryModal(true);
-    };
-
-    // Abrir modal de agendar turno
-    const openAppointmentModal = (patient) => {
-        setSelectedPatient(patient);
-        setNewAppointment({
-            date: '',
-            time: '',
-            reason: 'Consulta general',
-            doctor: 'Dr. García',
-            notes: `Paciente: ${patient.name} - DNI: ${patient.dni}`
-        });
-        setShowAppointmentModal(true);
-    };
 
     // Abrir detalles del paciente
     const openPatientDetails = (patient) => {
@@ -292,13 +121,80 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
         setShowPatientDetails(true);
     };
 
-    // Paginación
-    const indexOfLastPatient = currentPage * patientsPerPage;
-    const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
-    const currentPatients = filteredPatients.slice(indexOfFirstPatient, indexOfLastPatient);
-    const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
+    // Abrir modal de agendar turno
+    const openAppointmentModal = (patient) => {
+        setSelectedPatient(patient);
+        setAppointmentFormData({
+            name: `${patient.name} ${patient.lastname}`,
+            date: '',
+            time: '',
+            type: '',
+            dni: patient.dni
+        });
+        setShowAppointmentModal(true);
+    };
 
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    // Cerrar modal de turno
+    const handleCloseAppointmentModal = () => {
+        setShowAppointmentModal(false);
+        setSelectedPatient(null);
+        setAppointmentFormData({
+            name: '',
+            date: '',
+            time: '',
+            type: '',
+            dni: ''
+        });
+    };
+
+    // Manejar cambios en el formulario de turno
+    const handleAppointmentFormChange = (e) => {
+        const { name, value } = e.target;
+        setAppointmentFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Enviar turno
+    const handleSubmitAppointment = async (e) => {
+        e.preventDefault();
+
+        if (!appointmentFormData.name || !appointmentFormData.date || !appointmentFormData.time || !appointmentFormData.type) {
+            alert('Por favor completa todos los campos obligatorios');
+            return;
+        }
+
+        setSchedulingAppointment(true);
+
+        try {
+            console.log('=== ENVIANDO TURNO ===');
+            console.log('Form data:', appointmentFormData);
+            console.log('User ID:', user.id);
+
+            await appointmentService.createAppointment(appointmentFormData, user.id);
+
+            alert(`✓ Turno agendado para ${appointmentFormData.name} el ${appointmentFormData.date} a las ${appointmentFormData.time}`);
+            handleCloseAppointmentModal();
+        } catch (error) {
+            console.error('Error al crear turno:', error);
+            alert(`✗ Error: ${error.message}`);
+        } finally {
+            setSchedulingAppointment(false);
+        }
+    };
+
+    // Ir a historial clínico
+    const openMedicalHistory = (patient) => {
+        navigate(`/patient/${patient.id}/medical-history`);
+    };
+
+    // Cambiar página
+    const paginate = (pageNumber) => {
+        if (pageNumber >= 1 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+        }
+    };
 
     // Formatear fecha
     const formatDate = (dateString) => {
@@ -306,6 +202,13 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('es-AR');
     };
+
+    // Crear datos formateados para la tabla
+    const tablePatients = filteredPatients.map(patient => ({
+        ...patient,
+        age: calculateAge(patient.birthdate),
+        fullName: `${patient.name} ${patient.lastname}`
+    }));
 
     return (
         <div className="app">
@@ -324,221 +227,133 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                         <p className="page-subtitle">Visualiza y administra la información de tus pacientes</p>
                     </div>
 
-                    {/* Barra de búsqueda y filtros */}
+                    {/* Barra de búsqueda */}
                     <SearchPatients 
                         searchTerm={searchTerm}
                         onSearchChange={handleSearch}
                     />
 
                     {/* Tabla de pacientes */}
-                    <PatientsTable 
-                        patients={currentPatients}
-                        onViewDetails={openPatientDetails}
-                        onViewMedicalHistory={openMedicalHistory}
-                        onScheduleAppointment={openAppointmentModal}
-                    />
-
-                    {/* Paginación */}
-                    {filteredPatients.length > 0 && (
-                        <PaginationControls 
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            filteredPatientsCount={filteredPatients.length}
-                            patientsPerPage={patientsPerPage}
-                            onPageChange={paginate}
-                        />
-                    )}
-
-                    {/* Modal - Historial Clínico */}
-                    {showMedicalHistoryModal && selectedPatient && (
-                        <div className="modal-overlay">
-                            <div className="modal medical-history-modal">
-                                <div className="modal-header">
-                                    <div>
-                                        <h3 className="modal-title">Historial Clínico</h3>
-                                        <p className="modal-subtitle">{selectedPatient.name} - DNI: {selectedPatient.dni}</p>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowMedicalHistoryModal(false)}
-                                        className="close-btn"
-                                    >
-                                        <CloseIcon />
-                                    </button>
-                                </div>
-
-                                <div className="modal-content">
-                                    <div className="section">
-                                        <h4 className="section-title">Información del Paciente</h4>
-                                        <div className="info-grid">
-                                            <div className="info-item">
-                                                <p className="info-label">Grupo Sanguíneo</p>
-                                                <p className="info-value">{selectedPatient.bloodType || 'No especificado'}</p>
-                                            </div>
-                                            <div className="info-item">
-                                                <p className="info-label">Alergias</p>
-                                                <p className="info-value">Ninguna registrada</p>
-                                            </div>
-                                            <div className="info-item">
-                                                <p className="info-label">Medicamentos Actuales</p>
-                                                <p className="info-value">Ninguno</p>
-                                            </div>
-                                            <div className="info-item">
-                                                <p className="info-label">Enfermedades Crónicas</p>
-                                                <p className="info-value">Ninguna</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="section">
-                                        <h4 className="section-title">Historial de Visitas</h4>
-                                        <div className="visits-list">
-                                            {[1, 2, 3].map((visit) => (
-                                                <div key={visit} className="visit-card">
-                                                    <div className="visit-header">
-                                                        <div>
-                                                            <p className="visit-title">Consulta de rutina</p>
-                                                            <p className="visit-meta">Dr. García • 15/01/2024</p>
-                                                        </div>
-                                                        <span className="visit-status">
-                                                            Completada
-                                                        </span>
-                                                    </div>
-                                                    <p className="visit-description">Paciente se presenta para control anual. Todos los parámetros dentro de rangos normales.</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="modal-footer">
-                                        <button
-                                            onClick={() => setShowMedicalHistoryModal(false)}
-                                            className="btn-secondary"
-                                        >
-                                            Cerrar
-                                        </button>
-                                        <button className="btn-primary">
-                                            Nuevo Registro
-                                        </button>
-                                    </div>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '40px' }}>
+                            <p>Cargando pacientes...</p>
+                        </div>
+                    ) : patients.length === 0 ? (
+                        <div className="no-results">
+                            <p style={{ fontSize: '18px', color: '#666' }}>
+                                No hay pacientes registrados
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="patients-table-container">
+                                <div className="table-wrapper">
+                                    <table className="patients-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre y Apellido</th>
+                                                <th>DNI</th>
+                                                <th>Edad</th>
+                                                <th>Ocupación</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {tablePatients.length > 0 ? (
+                                                tablePatients.map(patient => (
+                                                    <tr key={patient.id}>
+                                                        <td>
+                                                            <div className="patient-info">
+                                                                <div className="patient-avatar">
+                                                                    <UserIcon />
+                                                                </div>
+                                                                <div className="patient-details">
+                                                                    <p className="patient-name">{patient.fullName}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="dni-text">{patient.dni}</td>
+                                                        <td>{patient.age ? `${patient.age} años` : 'N/A'}</td>
+                                                        <td>{patient.occupation || '-'}</td>
+                                                        <td>
+                                                            <div className="action-buttons">
+                                                                <button
+                                                                    className="action-btn details-btn"
+                                                                    title="Ver detalles"
+                                                                    onClick={() => openPatientDetails(patient)}
+                                                                >
+                                                                    👁️
+                                                                </button>
+                                                                <button
+                                                                    className="action-btn history-btn"
+                                                                    title="Historial clínico"
+                                                                    onClick={() => openMedicalHistory(patient)}
+                                                                >
+                                                                    📋
+                                                                </button>
+                                                                <button
+                                                                    className="action-btn appointment-btn"
+                                                                    title="Agendar turno"
+                                                                    onClick={() => openAppointmentModal(patient)}
+                                                                >
+                                                                    📅
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                                                        No se encontraron pacientes con esa búsqueda
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        </div>
-                    )}
 
-                    {/* Modal - Agendar Turno */}
-                    {showAppointmentModal && selectedPatient && (
-                        <div className="modal-overlay">
-                            <div className="modal appointment-modal">
-                                <div className="modal-header">
-                                    <div>
-                                        <h3 className="modal-title">Agendar Nuevo Turno</h3>
-                                        <p className="modal-subtitle">{selectedPatient.name} - DNI: {selectedPatient.dni}</p>
+                            {/* Paginación */}
+                            {totalPages > 1 && (
+                                <div className="pagination-container">
+                                    <div className="pagination-info">
+                                        Página {currentPage} de {totalPages} • Total: {totalPatients} pacientes
                                     </div>
-                                    <button
-                                        onClick={() => setShowAppointmentModal(false)}
-                                        className="close-btn"
-                                    >
-                                        <CloseIcon />
-                                    </button>
-                                </div>
-
-                                <div className="modal-content">
-                                    <div className="form-group">
-                                        <label className="form-label">
-                                            Fecha *
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={newAppointment.date}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, date: e.target.value })}
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">
-                                            Hora *
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={newAppointment.time}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">
-                                            Motivo
-                                        </label>
-                                        <select
-                                            value={newAppointment.reason}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, reason: e.target.value })}
-                                            className="form-input"
-                                        >
-                                            <option value="Consulta general">Consulta general</option>
-                                            <option value="Control">Control</option>
-                                            <option value="Estudios">Estudios</option>
-                                            <option value="Urgencia">Urgencia</option>
-                                            <option value="Otro">Otro</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">
-                                            Profesional
-                                        </label>
-                                        <select
-                                            value={newAppointment.doctor}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, doctor: e.target.value })}
-                                            className="form-input"
-                                        >
-                                            <option value="Dr. García">Dr. García</option>
-                                            <option value="Dra. Martínez">Dra. Martínez</option>
-                                            <option value="Dr. Rodríguez">Dr. Rodríguez</option>
-                                            <option value="Dra. López">Dra. López</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">
-                                            Notas adicionales
-                                        </label>
-                                        <textarea
-                                            value={newAppointment.notes}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, notes: e.target.value })}
-                                            rows="3"
-                                            className="form-input textarea"
-                                            placeholder="Observaciones importantes..."
-                                        />
-                                    </div>
-
-                                    <div className="modal-footer">
+                                    <div className="pagination-buttons">
                                         <button
-                                            onClick={() => setShowAppointmentModal(false)}
-                                            className="btn-secondary"
+                                            className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                                            onClick={() => paginate(currentPage - 1)}
+                                            disabled={currentPage === 1}
                                         >
-                                            Cancelar
+                                            ← Anterior
                                         </button>
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                            <button
+                                                key={page}
+                                                className={`page-number ${currentPage === page ? 'active' : ''}`}
+                                                onClick={() => paginate(page)}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
                                         <button
-                                            onClick={handleCreateAppointment}
-                                            className="btn-primary"
+                                            className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                                            onClick={() => paginate(currentPage + 1)}
+                                            disabled={currentPage === totalPages}
                                         >
-                                            <CalendarIcon />
-                                            Agendar Turno
+                                            Siguiente →
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            )}
+                        </>
                     )}
 
                     {/* Modal - Detalles del Paciente */}
                     {showPatientDetails && selectedPatient && (
-                        <div className="modal-overlay">
-                            <div className="modal patient-details-modal">
+                        <div className="modal-overlay" onClick={() => setShowPatientDetails(false)}>
+                            <div className="modal patient-details-modal" onClick={(e) => e.stopPropagation()}>
                                 <div className="modal-header">
                                     <h3 className="modal-title">Detalles del Paciente</h3>
                                     <button
@@ -555,7 +370,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                             <UserIcon />
                                         </div>
                                         <div className="profile-info">
-                                            <h4 className="profile-name">{selectedPatient.name}</h4>
+                                            <h4 className="profile-name">{selectedPatient.name} {selectedPatient.lastname}</h4>
                                             <p className="profile-dni">DNI: {selectedPatient.dni}</p>
                                         </div>
                                     </div>
@@ -563,29 +378,34 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                     <div className="details-grid">
                                         <div className="detail-item">
                                             <p className="detail-label">Edad</p>
-                                            <p className="detail-value">{selectedPatient.age} años</p>
+                                            <p className="detail-value">{calculateAge(selectedPatient.birthdate) || 'N/A'} años</p>
                                         </div>
                                         <div className="detail-item">
-                                            <p className="detail-label">Género</p>
-                                            <p className="detail-value">{selectedPatient.gender}</p>
+                                            <p className="detail-label">Fecha de Nacimiento</p>
+                                            <p className="detail-value">{formatDate(selectedPatient.birthdate)}</p>
                                         </div>
                                         <div className="detail-item full-width">
                                             <p className="detail-label">Teléfono</p>
-                                            <p className="detail-value">{selectedPatient.phone}</p>
+                                            <p className="detail-value">{selectedPatient.tel || 'No especificado'}</p>
                                         </div>
                                         <div className="detail-item full-width">
                                             <p className="detail-label">Email</p>
-                                            <p className="detail-value">{selectedPatient.email}</p>
+                                            <p className="detail-value">{selectedPatient.email || 'No especificado'}</p>
                                         </div>
                                         <div className="detail-item full-width">
                                             <p className="detail-label">Dirección</p>
-                                            <p className="detail-value">{selectedPatient.address}</p>
+                                            <p className="detail-value">{selectedPatient.address || 'No especificada'}</p>
                                         </div>
                                         <div className="detail-item">
-                                            <p className="detail-label">Grupo Sanguíneo</p>
-                                            <p className="detail-value">{selectedPatient.bloodType || 'No especificado'}</p>
+                                            <p className="detail-label">Ocupación</p>
+                                            <p className="detail-value">{selectedPatient.occupation || 'No especificada'}</p>
                                         </div>
-                                    
+                                        {selectedPatient.affiliate_number && (
+                                            <div className="detail-item">
+                                                <p className="detail-label">Nro. Afiliado</p>
+                                                <p className="detail-value">{selectedPatient.affiliate_number}</p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="modal-footer">
@@ -597,6 +417,104 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal - Agendar Turno */}
+                    {showAppointmentModal && selectedPatient && (
+                        <div className="modal-overlay" onClick={handleCloseAppointmentModal}>
+                            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h2>Agendar Nuevo Turno</h2>
+                                    <button className="modal-close" onClick={handleCloseAppointmentModal}>
+                                        <span>&times;</span>
+                                    </button>
+                                </div>
+
+                                <form className="appointment-form" onSubmit={handleSubmitAppointment}>
+                                    <div className="form-group">
+                                        <label htmlFor="name">Nombre completo *</label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            value={appointmentFormData.name}
+                                            onChange={handleAppointmentFormChange}
+                                            placeholder="Ej: María González"
+                                            required
+                                            disabled={schedulingAppointment}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="dni">DNI</label>
+                                        <input
+                                            type="text"
+                                            id="dni"
+                                            name="dni"
+                                            value={appointmentFormData.dni}
+                                            placeholder="Ej: 12345678"
+                                            disabled
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="date">Fecha *</label>
+                                        <input
+                                            type="date"
+                                            id="date"
+                                            name="date"
+                                            value={appointmentFormData.date}
+                                            onChange={handleAppointmentFormChange}
+                                            required
+                                            disabled={schedulingAppointment}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="time">Hora *</label>
+                                        <input
+                                            type="time"
+                                            id="time"
+                                            name="time"
+                                            value={appointmentFormData.time}
+                                            onChange={handleAppointmentFormChange}
+                                            required
+                                            disabled={schedulingAppointment}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="type">Tipo de Tratamiento *</label>
+                                        <select
+                                            id="type"
+                                            name="type"
+                                            value={appointmentFormData.type}
+                                            onChange={handleAppointmentFormChange}
+                                            required
+                                            disabled={schedulingAppointment}
+                                        >
+                                            <option value="">Seleccionar tratamiento...</option>
+                                            <option value="Consulta">Consulta</option>
+                                            <option value="Limpieza dental">Limpieza dental</option>
+                                            <option value="Extracción">Extracción</option>
+                                            <option value="Blanqueamiento">Blanqueamiento</option>
+                                            <option value="Ortodoncia">Ortodoncia</option>
+                                            <option value="Implante dental">Implante dental</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="modal-actions">
+                                        <button type="button" className="btn-outline" onClick={handleCloseAppointmentModal} disabled={schedulingAppointment}>
+                                            Cancelar
+                                        </button>
+                                        <button type="submit" className="btn-primary" disabled={schedulingAppointment}>
+                                            {schedulingAppointment ? 'Agendando...' : 'Agendar Turno'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     )}

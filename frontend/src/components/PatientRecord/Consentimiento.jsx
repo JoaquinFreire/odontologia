@@ -4,6 +4,7 @@ import { CheckCircle } from 'lucide-react';
 
 const Consentimiento = ({ patientData, user, consentData, setConsentData }) => {
   // Actualizar datos del doctor cuando el componente monta o user cambia
+  console.log(user, " Aca");
   useEffect(() => {
     if (user?.name || user?.tuition) {
       setConsentData(prev => ({
