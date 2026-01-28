@@ -1,58 +1,84 @@
 // components/PatientRecord/Consentimiento.jsx
-import React from 'react';
-import { Save, FileText } from 'lucide-react';
-const Consentimiento = ({ patientData, setPatientData }) => {
+import React, { useEffect } from 'react';
+import { CheckCircle } from 'lucide-react';
+
+const Consentimiento = ({ patientData, user, consentData, setConsentData }) => {
+  // Actualizar datos del doctor cuando el componente monta o user cambia
+  useEffect(() => {
+    if (user?.name || user?.tuition) {
+      setConsentData(prev => ({
+        ...prev,
+        doctorName: user?.name || '',
+        doctorMatricula: user?.tuition || ''
+      }));
+    }
+  }, [user, setConsentData]);
+
   const handleConsentChange = (field, value) => {
-    setPatientData(prev => ({
+    setConsentData(prev => ({
       ...prev,
-      consent: {
-        ...prev.consent,
-        [field]: value
-      }
+      [field]: value
     }));
   };
+
+  const consentText = `En este acto, yo ${patientData.name || '___________'} ${patientData.lastname || '___________'} DNI ${patientData.dni || '___________'} autorizo a Od ${user?.name || '___________'} M.P. ${user?.tuition || '___________'} y/o asociados o ayudantes a realizar el tratamiento informado, conversado con el profesional sobre la naturaleza y propósito del tratamiento, sobre la posibilidad de complicaciones, los riesgos y administración de anestesia local, práctica, radiografías y otros métodos de diagnóstico.`;
 
   return (
     <div className="consentimiento-section">
       <div className="section-header">
-        <h3>Acta de Consentimiento</h3>
-        <button className="btn-primary">
-          <Save size={18} />
-          <span>Firmar y Guardar</span>
-        </button>
+        <h3>Acta de Consentimiento Informado</h3>
+        <p className="section-subtitle">El paciente debe leer, aceptar este documento</p>
       </div>
 
       <div className="consent-form">
-        <div className="consent-text">
-          <p>
-            En este acto, yo __________ DNI __________ autorizo a Od ______ M.P. _____
-            y/o asociados o ayudantes a realizar el tratamiento informado, conversado
-            con el profesional sobre la naturaleza y propósito del tratamiento, sobre
-            la posibilidad de complicaciones, los riesgos y administración de anestesia
-            local, práctica, radiografías y otros métodos de diagnóstico.
+        <div className="consent-text-box">
+          <p className="consent-text">
+            {consentText}
           </p>
         </div>
 
         <div className="consent-fields">
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="consentDni">DNI *</label>
+              <label htmlFor="consentDni">DNI del Paciente *</label>
               <input
                 type="text"
                 id="consentDni"
-                value={patientData.consent?.dni || ''}
-                onChange={(e) => handleConsentChange('dni', e.target.value)}
-                placeholder="Ingrese su DNI"
+                value={patientData.dni || ''}
+                readOnly
+                placeholder="Se completa automáticamente"
               />
             </div>
             <div className="form-group">
-              <label htmlFor="consentDate">Fecha *</label>
+              <label htmlFor="consentDate">Fecha y Hora *</label>
               <input
-                type="date"
+                type="datetime-local"
                 id="consentDate"
-                value={patientData.consent?.date || new Date().toISOString().split('T')[0]}
-                onChange={(e) => handleConsentChange('date', e.target.value)}
+                value={consentData.datetime || new Date().toISOString().slice(0, 16)}
+                onChange={(e) => handleConsentChange('datetime', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="doctorName">Odontólogo *</label>
+              <input
+                type="text"
+                id="doctorName"
+                value={consentData.doctorName || user?.name || ''}
                 readOnly
+                placeholder="Se completa automáticamente"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="doctorMatricula">Matrícula *</label>
+              <input
+                type="text"
+                id="doctorMatricula"
+                value={consentData.doctorMatricula || user?.tuition || ''}
+                readOnly
+                placeholder="Se completa automáticamente"
               />
             </div>
           </div>
@@ -61,27 +87,23 @@ const Consentimiento = ({ patientData, setPatientData }) => {
             <label className="checkbox-label large">
               <input
                 type="checkbox"
-                checked={patientData.consent?.readAccepted || false}
-                onChange={(e) => handleConsentChange('readAccepted', e.target.checked)}
+                checked={consentData.accepted || false}
+                onChange={(e) => handleConsentChange('accepted', e.target.checked)}
               />
               <span className="checkmark large"></span>
               <div className="acceptance-text">
-                <h4>He leído y acepto</h4>
-                <p>Declaro que he leído y comprendido la información anterior</p>
+                <h4>He leído y acepto el consentimiento informado</h4>
+                <p>Declaro que he leído y comprendido toda la información anterior y acepto recibir el tratamiento descrito</p>
               </div>
             </label>
           </div>
 
-          <div className="signature-pad">
-            <h4>Firma del Paciente</h4>
-            <div className="signature-area">
-              <p>Espacio para firma digital</p>
-              <button className="btn-outline">
-                <FileText size={16} />
-                <span>Capturar Firma</span>
-              </button>
+          {consentData.accepted && (
+            <div className="consent-ready">
+              <CheckCircle size={20} color="#2e7d32" />
+              <p>Documento listo para guardar</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
