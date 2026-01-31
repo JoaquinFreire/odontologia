@@ -1,33 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../../styles/Odontograma.css';
 
-// 1. CONFIGURACIÓN Y CONSTANTES (Fuera para que no se re-creen)
 const CONSTANTS = {
-  TOOTH_SIZE: 40,
-  CELL_SIZE: 40 / 3,
-  GAP: 12, 
-  ROW_GAP: 80, 
+  TOOTH_RADIUS: 22, 
+  INNER_RADIUS: 11, 
+  GAP: 15, 
+  ROW_GAP: 110, 
   COLORS: {
     RED: '#d32f2f',
     BLUE: '#1976d2',
     BLACK: '#333333',
     WHITE: '#ffffff',
-    HOVER: 'rgba(0,0,0,0.08)'
+    HOVER: 'rgba(0,0,0,0.05)'
   }
 };
 
-const teethUpper = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
-const teethLower = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+const ADULTO_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+const ADULTO_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+const NINO_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
+const NINO_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
-const facesMap = {
-  top: { x: 1, y: 0 },
-  left: { x: 0, y: 1 },
-  center: { x: 1, y: 1 },
-  right: { x: 2, y: 1 },
-  bottom: { x: 1, y: 2 }
-};
-
-// 2. COMPONENTES AUXILIARES (Definidos fuera del render principal)
 const ToolGroup = ({ title, tools, selectedTool, onSelect }) => (
   <div className="tool-group">
     <h4>{title}</h4>
@@ -35,7 +27,7 @@ const ToolGroup = ({ title, tools, selectedTool, onSelect }) => (
       {tools.map(t => (
         <button 
           key={t.id} 
-          className={`tool-btn ${selectedTool === t.id ? 'active' : ''} ${t.className || ''}`}
+          className={`tool-btn-large ${selectedTool === t.id ? 'active' : ''} ${t.className || ''}`}
           onClick={() => onSelect(t.id)}
         >
           {t.label}
@@ -46,188 +38,187 @@ const ToolGroup = ({ title, tools, selectedTool, onSelect }) => (
 );
 
 const SingleTooth = ({ id, x, y, data, onInteraction, isSelected }) => {
-  const [hover, setHover] = useState(false);
   const { faces = {}, attributes = {} } = data;
   const getColor = (state) => state === 'red' ? CONSTANTS.COLORS.RED : CONSTANTS.COLORS.BLUE;
+  const r1 = CONSTANTS.INNER_RADIUS;
+  const r2 = CONSTANTS.TOOTH_RADIUS;
+  
+  const facePaths = {
+    top: `M ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} L ${-r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 1 ${r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} L ${r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 0 ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)}`,
+    bottom: `M ${-r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} L ${-r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 0 ${r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} L ${r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 1 ${-r1/Math.sqrt(2)} ${r1/Math.sqrt(2)}`,
+    left: `M ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} L ${-r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 0 ${-r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} L ${-r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 1 ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)}`,
+    right: `M ${r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} L ${r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 1 ${r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} L ${r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 0 ${r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)}`
+  };
 
   return (
-    <g 
-      transform={`translate(${x}, ${y})`} 
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{ cursor: 'pointer' }}
-      onClick={(e) => onInteraction(e, id)}
-    >
-      <rect 
-        x={-2} y={-2} 
-        width={CONSTANTS.TOOTH_SIZE + 4} height={CONSTANTS.TOOTH_SIZE + 4}
-        fill={isSelected ? 'rgba(255, 235, 59, 0.4)' : (hover ? CONSTANTS.COLORS.HOVER : 'transparent')}
-        rx="4"
-      />
-
-      {Object.entries(facesMap).map(([face, coords]) => (
-        <rect
-          key={face}
-          id={`face-${id}-${face}`}
-          x={coords.x * CONSTANTS.CELL_SIZE}
-          y={coords.y * CONSTANTS.CELL_SIZE}
-          width={CONSTANTS.CELL_SIZE}
-          height={CONSTANTS.CELL_SIZE}
-          stroke={CONSTANTS.COLORS.BLACK}
-          strokeWidth="0.5"
-          fill={faces[face] ? getColor(faces[face]) : CONSTANTS.COLORS.WHITE}
-          pointerEvents="all"
-        />
+    <g transform={`translate(${x}, ${y})`} onClick={(e) => onInteraction(e, id)} style={{ cursor: 'pointer' }}>
+      <circle r={r2 + 4} fill={isSelected ? 'rgba(255, 235, 59, 0.4)' : 'transparent'} />
+      {Object.entries(facePaths).map(([face, path]) => (
+        <path key={face} id={`face-${id}-${face}`} d={path} stroke={CONSTANTS.COLORS.BLACK} strokeWidth="1" fill={faces[face] ? getColor(faces[face]) : CONSTANTS.COLORS.WHITE} />
       ))}
-
+      <circle id={`face-${id}-center`} r={r1} stroke={CONSTANTS.COLORS.BLACK} strokeWidth="1" fill={faces.center ? getColor(faces.center) : CONSTANTS.COLORS.WHITE} />
       <g pointerEvents="none">
-        {attributes.crown && (
-          <circle 
-            cx={CONSTANTS.TOOTH_SIZE / 2} cy={CONSTANTS.TOOTH_SIZE / 2} 
-            r={CONSTANTS.TOOTH_SIZE / 2 + 3}
-            fill="none" stroke={getColor(attributes.crown)} strokeWidth="2.5"
-          />
-        )}
+        {attributes.crown && <circle r={r2 + 4} fill="none" stroke={getColor(attributes.crown)} strokeWidth="2.5" />}
         {attributes.missing && (
           <g stroke={getColor(attributes.missing)} strokeWidth="3">
-             <line x1={0} y1={0} x2={CONSTANTS.TOOTH_SIZE} y2={CONSTANTS.TOOTH_SIZE} />
-             <line x1={CONSTANTS.TOOTH_SIZE} y1={0} x2={0} y2={CONSTANTS.TOOTH_SIZE} />
+            <line x1={-r2} y1={-r2} x2={r2} y2={r2} /><line x1={r2} y1={-r2} x2={-r2} y2={r2} />
           </g>
         )}
-        {attributes.implant && (
-          <text x={CONSTANTS.TOOTH_SIZE / 2} y={CONSTANTS.TOOTH_SIZE + 18} textAnchor="middle" fill={getColor(attributes.implant)} fontWeight="bold" fontSize="16">I</text>
-        )}
-        {attributes.endodontics && (
-          <text x={CONSTANTS.TOOTH_SIZE / 2} y={-8} textAnchor="middle" fill={getColor(attributes.endodontics)} fontWeight="bold" fontSize="14">Tc</text>
-        )}
+        {attributes.implant && <text y={r2 + 15} textAnchor="middle" fill={getColor(attributes.implant)} fontWeight="bold" fontSize="14">I</text>}
+        {attributes.endodontics && <text y={-r2 - 8} textAnchor="middle" fill={getColor(attributes.endodontics)} fontWeight="bold" fontSize="12">Tc</text>}
       </g>
-
-      <text x={CONSTANTS.TOOTH_SIZE / 2} y={CONSTANTS.TOOTH_SIZE + 32} textAnchor="middle" fontSize="11" fill="#444" fontWeight="bold" pointerEvents="none">
-        {id}
-      </text>
+      <text y={r2 + 32} textAnchor="middle" fontSize="13" fill="#333" fontWeight="bold" pointerEvents="none">{id}</text>
     </g>
   );
 };
 
-// 3. COMPONENTE PRINCIPAL
-const Odontograma = ({ onDataChange, initialData = { teethState: {}, connections: [] } }) => {
-  const [teethState, setTeethState] = useState(initialData.teethState || {});
-  const [connections, setConnections] = useState(initialData.connections || []);
+const Odontograma = ({ initialData, onDataChange }) => {
+  const [view, setView] = useState('adult'); 
+  const [data, setData] = useState(initialData || {
+    adult: { teethState: {}, connections: [] },
+    child: { teethState: {}, connections: [] }
+  });
   const [selectedTool, setSelectedTool] = useState('cursor');
   const [interactionStep, setInteractionStep] = useState(null);
+  const lastInitialData = useRef();
 
-  // Actualizar datos del padre cuando cambie el estado
-  React.useEffect(() => {
-    onDataChange({ teethState, connections });
-  }, [teethState, connections, onDataChange]);
+  // Update internal state when initialData changes
+  useEffect(() => {
+    if (initialData && JSON.stringify(initialData) !== JSON.stringify(lastInitialData.current)) {
+      lastInitialData.current = initialData;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setData(initialData);
+    }
+  }, [initialData]);
 
-  const getCoords = (id) => {
-    const isUpper = teethUpper.includes(id);
-    const index = isUpper ? teethUpper.indexOf(id) : teethLower.indexOf(id);
-    // Margen izquierdo aumentado (60) para que el 18 no esté pegado al borde
-    const x = 60 + index * (CONSTANTS.TOOTH_SIZE + CONSTANTS.GAP);
-    const y = isUpper ? 60 : 60 + CONSTANTS.TOOTH_SIZE + CONSTANTS.ROW_GAP;
+  // Notify parent when data changes
+  useEffect(() => {
+    if (onDataChange) {
+      onDataChange(data);
+    }
+  }, [data, onDataChange]);
+
+  const currentTeethUpper = view === 'adult' ? ADULTO_UPPER : NINO_UPPER;
+  const currentTeethLower = view === 'adult' ? ADULTO_LOWER : NINO_LOWER;
+
+  const getCoords = (id, currentView) => {
+    const teethU = currentView === 'adult' ? ADULTO_UPPER : NINO_UPPER;
+    const teethL = currentView === 'adult' ? ADULTO_LOWER : NINO_LOWER;
+    const isUpper = teethU.includes(id);
+    const index = isUpper ? teethU.indexOf(id) : teethL.indexOf(id);
+    if (index === -1) return null;
+
+    const offset = currentView === 'child' ? (ADULTO_UPPER.length - NINO_UPPER.length) * (CONSTANTS.TOOTH_RADIUS + CONSTANTS.GAP/2) : 0;
+    const x = 60 + offset + index * (CONSTANTS.TOOTH_RADIUS * 2 + CONSTANTS.GAP);
+    const y = isUpper ? 80 : 80 + CONSTANTS.TOOTH_RADIUS * 2 + CONSTANTS.ROW_GAP;
     return { x, y, isUpper };
-  };
-
-  const handleToolSelect = (toolId) => {
-    setSelectedTool(toolId);
-    setInteractionStep(null);
   };
 
   const handleToothInteraction = (e, id) => {
     const targetId = e.target.id;
-    
-    // Caras
+    const viewData = data[view];
+
     if (selectedTool.startsWith('face_') && targetId.startsWith('face-')) {
       const face = targetId.split('-')[2];
       const color = selectedTool.split('_')[1];
-      setTeethState(prev => {
-        const tooth = prev[id] || { faces: {}, attributes: {} };
-        const newFaceState = tooth.faces[face] === color ? null : color;
-        return { ...prev, [id]: { ...tooth, faces: { ...tooth.faces, [face]: newFaceState } } };
-      });
+      const tooth = viewData.teethState[id] || { faces: {}, attributes: {} };
+      const newFaces = { ...tooth.faces, [face]: tooth.faces[face] === color ? null : color };
+      setData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, faces: newFaces } } } });
       return;
     }
 
-    // Atributos
     const toolPrefix = selectedTool.split('_')[0];
     const attrMap = { crown: 'crown', missing: 'missing', tc: 'endodontics', imp: 'implant' };
     if (attrMap[toolPrefix]) {
       const color = selectedTool.split('_')[1];
       const attrKey = attrMap[toolPrefix];
-      setTeethState(prev => {
-        const tooth = prev[id] || { faces: {}, attributes: {} };
-        const newVal = tooth.attributes[attrKey] === color ? null : color;
-        return { ...prev, [id]: { ...tooth, attributes: { ...tooth.attributes, [attrKey]: newVal } } };
-      });
+      const tooth = viewData.teethState[id] || { faces: {}, attributes: {} };
+      const newVal = tooth.attributes[attrKey] === color ? null : color;
+      setData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, attributes: { ...tooth.attributes, [attrKey]: newVal } } } } });
       return;
     }
 
-    // Puentes
     if (selectedTool.startsWith('bridge')) {
       if (!interactionStep) {
         setInteractionStep({ startId: id });
-      } else {
-        if (interactionStep.startId !== id) {
-          const parts = selectedTool.split('_');
-          const type = parts[1]; // fixed o removable
-          const color = parts[2]; // red o blue
-          setConnections(prev => [...prev, { start: interactionStep.startId, end: id, type, color }]);
-          setInteractionStep(null);
-        }
+      } else if (interactionStep.startId !== id) {
+        const parts = selectedTool.split('_');
+        const newConn = { start: interactionStep.startId, end: id, type: parts[1], color: parts[2] };
+        setData({ ...data, [view]: { ...viewData, connections: [...viewData.connections, newConn] } });
+        setInteractionStep(null);
       }
     }
   };
 
   return (
     <div className="odontograma-app">
+      <div className="view-selector">
+        <button className={`view-btn ${view === 'adult' ? 'active' : ''}`} onClick={() => {setView('adult'); setInteractionStep(null);}}>Adulto</button>
+        <button className={`view-btn ${view === 'child' ? 'active' : ''}`} onClick={() => {setView('child'); setInteractionStep(null);}}>Niño</button>
+      </div>
+
       <div className="controls-panel">
-        <ToolGroup title="Básico" tools={[{id: 'cursor', label: 'Cursor'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
-        <ToolGroup title="Caras" tools={[{id: 'face_red', label: '●', className: 'text-red'}, {id: 'face_blue', label: '●', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
-        <ToolGroup title="Corona" tools={[{id: 'crown_red', label: '○', className: 'text-red'}, {id: 'crown_blue', label: '○', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
-        <ToolGroup title="Extracción" tools={[{id: 'missing_red', label: 'X', className: 'text-red'}, {id: 'missing_blue', label: 'X', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
-        <ToolGroup title="Endodoncia" tools={[{id: 'tc_red', label: 'Tc', className: 'text-red'}, {id: 'tc_blue', label: 'Tc', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
-        <ToolGroup title="Implante" tools={[{id: 'imp_red', label: 'I', className: 'text-red'}, {id: 'imp_blue', label: 'I', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
-        <ToolGroup title="Fija" tools={[{id: 'bridge_fixed_red', label: '⟷', className: 'text-red'}, {id: 'bridge_fixed_blue', label: '⟷', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
-        <ToolGroup title="Removible" tools={[{id: 'bridge_removable_red', label: '[--]', className: 'text-red'}, {id: 'bridge_removable_blue', label: '[--]', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Básico" tools={[{id: 'cursor', label: 'Cursor'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Caries/Obt." tools={[{id: 'face_red', label: '●', className: 'text-red'}, {id: 'face_blue', label: '●', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Coronas" tools={[{id: 'crown_red', label: '○', className: 'text-red'}, {id: 'crown_blue', label: '○', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Pieza Aus." tools={[{id: 'missing_red', label: 'X', className: 'text-red'}, {id: 'missing_blue', label: 'X', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="TC / Imp" tools={[{id: 'tc_red', label: 'Tc', className: 'text-red'}, {id: 'tc_blue', label: 'Tc', className: 'text-blue'}, {id: 'imp_red', label: 'I', className: 'text-red'}, {id: 'imp_blue', label: 'I', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Prót. Fija" tools={[{id: 'bridge_fixed_red', label: '▭', className: 'text-red'}, {id: 'bridge_fixed_blue', label: '▭', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Prót. Rem." tools={[{id: 'bridge_removable_red', label: '⟷', className: 'text-red'}, {id: 'bridge_removable_blue', label: '⟷', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
       </div>
 
       <div className="svg-container">
-        {/* Ancho 1000 para asegurar que el 28 y 38 no se corten */}
-        <svg viewBox="0 0 1000 320" className="odontograma-svg">
-          {connections.map((conn, i) => {
-            const start = getCoords(conn.start);
-            const end = getCoords(conn.end);
-            const x1 = start.x + CONSTANTS.TOOTH_SIZE / 2;
-            const x2 = end.x + CONSTANTS.TOOTH_SIZE / 2;
-            const yBase = start.y + (start.isUpper ? 0 : CONSTANTS.TOOTH_SIZE);
-            const yLine = yBase + (start.isUpper ? -35 : 35);
-            const colorHex = conn.color === 'red' ? CONSTANTS.COLORS.RED : CONSTANTS.COLORS.BLUE;
-            return (
-              <g key={i} onClick={() => setConnections(prev => prev.filter((_, idx) => idx !== i))}>
-                {conn.type === 'fixed' ? (
-                  <g stroke={colorHex} strokeWidth="3">
-                    <line x1={x1} y1={yLine} x2={x2} y2={yLine} />
-                    <line x1={x1} y1={yLine} x2={x1} y2={yBase} />
-                    <line x1={x2} y1={yLine} x2={x2} y2={yBase} />
-                  </g>
-                ) : (
-                  <path d={`M ${x1} ${yBase} L ${x1} ${yLine} L ${x2} ${yLine} L ${x2} ${yBase}`} stroke={colorHex} strokeWidth="2" fill="none" strokeDasharray="5,3" />
-                )}
-                <circle cx={(x1+x2)/2} cy={yLine} r="7" fill="#444" style={{cursor:'pointer'}} />
-                <text x={(x1+x2)/2} y={yLine+3} textAnchor="middle" fill="white" fontSize="9" pointerEvents="none">x</text>
-              </g>
-            );
+        <svg viewBox="0 0 1000 350" className="odontograma-svg">
+          {data[view].connections.map((conn, i) => {
+            const s = getCoords(conn.start, view);
+            const e = getCoords(conn.end, view);
+            if (!s || !e) return null;
+            const color = conn.color === 'red' ? CONSTANTS.COLORS.RED : CONSTANTS.COLORS.BLUE;
+
+            if (conn.type === 'fixed') {
+              const xMin = Math.min(s.x, e.x) - CONSTANTS.TOOTH_RADIUS - 2;
+              const xMax = Math.max(s.x, e.x) + CONSTANTS.TOOTH_RADIUS + 2;
+              const yMin = s.y - CONSTANTS.TOOTH_RADIUS - 2;
+              return (
+                <g key={i} onClick={() => {
+                  const newConns = data[view].connections.filter((_, idx) => idx !== i);
+                  setData({...data, [view]: {...data[view], connections: newConns}});
+                }} style={{cursor:'pointer'}}>
+                  <rect x={xMin} y={yMin} width={xMax - xMin} height={CONSTANTS.TOOTH_RADIUS * 2 + 4} fill="none" stroke={color} strokeWidth="3" rx="4" />
+                  <circle cx={(xMin + xMax)/2} cy={yMin} r="8" fill="#444" /><text x={(xMin + xMax)/2} y={yMin + 4} textAnchor="middle" fill="white" fontSize="10">x</text>
+                </g>
+              );
+            } else {
+              const x1 = s.x; const x2 = e.x;
+              const yBase = s.y + (s.isUpper ? -CONSTANTS.TOOTH_RADIUS : CONSTANTS.TOOTH_RADIUS);
+              const yLine = yBase + (s.isUpper ? -25 : 25);
+              return (
+                <g key={i} onClick={() => {
+                   const newConns = data[view].connections.filter((_, idx) => idx !== i);
+                   setData({...data, [view]: {...data[view], connections: newConns}});
+                }} style={{cursor:'pointer'}}>
+                  <path d={`M ${x1} ${yBase} L ${x1} ${yLine} L ${x2} ${yLine} L ${x2} ${yBase}`} stroke={color} strokeWidth="3" fill="none" />
+                  <circle cx={(x1+x2)/2} cy={yLine} r="8" fill="#444" /><text x={(x1+x2)/2} y={yLine+4} textAnchor="middle" fill="white" fontSize="10">x</text>
+                </g>
+              );
+            }
           })}
-          {teethUpper.map(id => <SingleTooth key={id} id={id} {...getCoords(id)} data={teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
-          <line x1="40" y1="150" x2="960" y2="150" stroke="#ddd" strokeWidth="1" />
-          {teethLower.map(id => <SingleTooth key={id} id={id} {...getCoords(id)} data={teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
+
+          {currentTeethUpper.map(id => <SingleTooth key={id} id={id} {...getCoords(id, view)} data={data[view].teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
+          <line x1="40" y1="175" x2="960" y2="175" stroke="#eee" strokeWidth="2" />
+          {currentTeethLower.map(id => <SingleTooth key={id} id={id} {...getCoords(id, view)} data={data[view].teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
         </svg>
       </div>
 
-      <div className="json-output">
-        <pre>{JSON.stringify({ teethState, connections }, null, 2)}</pre>
+      <div className="json-outputs-row">
+        <div className="json-box">
+          <h5>ESTADO ADULTO</h5>
+          <pre>{JSON.stringify(data.adult, null, 2)}</pre>
+        </div>
+        <div className="json-box">
+          <h5>ESTADO NIÑO</h5>
+          <pre>{(Object.keys(data.child.teethState).length > 0 || data.child.connections.length > 0) ? JSON.stringify(data.child, null, 2) : "{}"}</pre>
+        </div>
       </div>
     </div>
   );

@@ -170,7 +170,8 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
     console.log('Guardando odontograma...');
     const odontogramaPayload = {
       patient_id: newPatientId,
-      formato: JSON.stringify(odontogramaData)
+      formato: JSON.stringify(odontogramaData.adult),
+      formato_nino: odontogramaData.child.teethState && Object.keys(odontogramaData.child.teethState).length > 0 || odontogramaData.child.connections.length > 0 ? JSON.stringify(odontogramaData.child) : null
     };
 
     const { data: odontogramaDataSaved, error: odontogramaError } = await supabase

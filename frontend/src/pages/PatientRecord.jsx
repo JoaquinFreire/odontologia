@@ -114,7 +114,10 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     doctorMatricula: ''
   });
 
-  const [odontogramaData, setOdontogramaData] = useState({ teethState: {}, connections: [] });
+  const [odontogramaData, setOdontogramaData] = useState({
+    adult: { teethState: {}, connections: [] },
+    child: { teethState: {}, connections: [] }
+  });
 
   const tabs = [
     { id: 'datos', label: 'Datos Personales', icon: <User size={20} /> },
@@ -129,19 +132,6 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     navigate('/login');
   };
 
-  const handlePrevious = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    if (currentIndex > 0) {
-      setActiveTab(tabs[currentIndex - 1].id);
-    }
-  };
-
-  const handleNext = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    if (currentIndex < tabs.length - 1) {
-      setActiveTab(tabs[currentIndex + 1].id);
-    }
-  };
 
   const validateRequiredData = () => {
     const patientErrors = [];
@@ -297,41 +287,6 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
                 <span>{tab.label}</span>
               </button>
             ))}
-          </div>
-
-          {/* Navegación por pasos */}
-          <div className="steps-navigation">
-            <button
-              className="step-nav-btn prev"
-              onClick={handlePrevious}
-              disabled={tabs.findIndex(tab => tab.id === activeTab) === 0}
-            >
-              <ChevronLeft size={18} />
-              <span>Anterior</span>
-            </button>
-
-            <div className="steps-indicator">
-              {tabs.map((tab, index) => (
-                <div key={tab.id} className="step-indicator">
-                  <div
-                    className={`step-dot ${activeTab === tab.id ? 'active' : ''} ${index < tabs.findIndex(t => t.id === activeTab) ? 'completed' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {index < tabs.findIndex(t => t.id === activeTab) ? <Check size={12} /> : index + 1}
-                  </div>
-                  <span className="step-label">{tab.label}</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              className="step-nav-btn next"
-              onClick={handleNext}
-              disabled={tabs.findIndex(tab => tab.id === activeTab) === tabs.length - 1}
-            >
-              <span>Siguiente</span>
-              <ChevronRight size={18} />
-            </button>
           </div>
 
           {/* Contenido principal */}
