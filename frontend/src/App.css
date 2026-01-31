@@ -197,7 +197,6 @@ body {
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
   transition: all 0.3s ease;
   font-size: 14px;
   
@@ -1290,6 +1289,7 @@ body {
 
 /* Small Mobile Breakpoint (480px and below) */
 @media (max-width: 480px) {
+
   .sidebar {
     width: 100vw;
     max-width: 100vw;
@@ -1384,4 +1384,98 @@ body {
   .quick-actions-grid {
     grid-template-columns: 1fr !important;
   }
+
+  .home-appointment-item.today-item {
+    display: flex;
+    flex-flow: column-reverse;
+    text-align: center;
+    padding: 10px;
+  }
+
 }
+
+
+
+@media (max-width: 768px) {
+    
+    /* 1. Cambio solicitado: Quitar el gap */
+    .home-appointment-item {
+        gap: 0; 
+        grid-template-columns: auto 1fr auto; /* Mantenemos columnas pero sin espacio entre ellas */
+        padding: 10px 8px;
+    }
+
+    /* 2. Ajuste de los contenedores principales */
+    .main-content {
+        padding: 10px;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .header-actions, .btn-primary {
+        width: 100%; /* El botón de "Agendar" ocupa todo el ancho */
+    }
+
+    /* 3. Reorganización de las columnas (Stack vertical) */
+    .content-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr; /* KPIs uno debajo del otro */
+        gap: 12px;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 botones por fila en mobile */
+        gap: 10px;
+    }
+
+    /* 4. Ajustes del Modal para pantallas pequeñas */
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    /* 5. Optimización de textos en los items de turnos */
+    .home-appointment-item span {
+        font-size: 14px;
+        /* Evita que el texto largo rompa el diseño */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* --- Ajuste extra para móviles muy pequeños (Menos de 480px) --- */
+@media (max-width: 480px) {
+    .quick-actions-grid{
+        grid-template-columns: 1fr; /* Acciones rápidas una por fila */
+    }
+    
+    .home-appointment-item {
+        /* Si el espacio es crítico, podemos pasar a 2 filas */
+        grid-template-columns: auto 1fr;
+    }
+    
+    .home-appointment-item .actions-container {
+        grid-column: span 2; /* Las acciones (botones) pasan abajo */
+        justify-content: flex-end;
+        display: flex;
+        margin-top: 8px;
+    }
+
+    
+}
+
+

@@ -60,7 +60,7 @@ const TodayAppointments = ({
                 </div>
                 <p>{app.type}</p>
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-around' }}>
                 <button
                   className="icon-button"
                   onClick={() => onMarkAsCompleted(app.id)}
