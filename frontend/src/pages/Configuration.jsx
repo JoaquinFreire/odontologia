@@ -29,9 +29,6 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
         return;
       }
 
-      console.log('=== CARGANDO DATOS DEL USUARIO ===');
-      console.log('Email:', user.email);
-
       const { data, error } = await supabase
         .from('user')
         .select('*')
@@ -86,9 +83,6 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
     setMessage('');
 
     try {
-      console.log('=== ACTUALIZANDO DATOS DEL USUARIO ===');
-      console.log('Datos nuevos:', formData);
-
       // Preparar datos a actualizar
       const dataToUpdate = {
         email: formData.email,

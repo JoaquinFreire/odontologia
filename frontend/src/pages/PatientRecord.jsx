@@ -114,6 +114,11 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     doctorMatricula: ''
   });
 
+  const [odontogramaData, setOdontogramaData] = useState({
+    adult: { teethState: {}, connections: [] },
+    child: { teethState: {}, connections: [] }
+  });
+
   const tabs = [
     { id: 'datos', label: 'Datos Personales', icon: <User size={20} /> },
     { id: 'anamnesis', label: 'Anamnesis', icon: <Briefcase size={20} /> },
@@ -127,49 +132,19 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     navigate('/login');
   };
 
-  const handlePrevious = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    if (currentIndex > 0) {
-      setActiveTab(tabs[currentIndex - 1].id);
-    }
-  };
-
-  const handleNext = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    if (currentIndex < tabs.length - 1) {
-      setActiveTab(tabs[currentIndex + 1].id);
-    }
-  };
 
   const validateRequiredData = () => {
     const patientErrors = [];
-    const anamnesisErrors = [];
-    const consentErrors = [];
 
-    // Validar datos personales
+    // Validar datos personales obligatorios
     if (!patientData.name) patientErrors.push('Nombre');
     if (!patientData.lastname) patientErrors.push('Apellido');
     if (!patientData.dni) patientErrors.push('DNI');
     if (!patientData.birthDate) patientErrors.push('Fecha de Nacimiento');
-    if (!patientData.phone) patientErrors.push('Teléfono');
-    if (!patientData.email) patientErrors.push('Email');
-
-    // Validar anamnesis
-    const hasAnyDisease = Object.values(anamnesisData.diseases).some(value => value === true);
-    if (!hasAnyDisease) {
-      anamnesisErrors.push('Debe marcar al menos una condición');
-    }
-
-    // Validar consentimiento
-    if (!consentData.accepted) {
-      consentErrors.push('Debe aceptar el consentimiento');
-    }
 
     return {
-      isValid: patientErrors.length === 0 && anamnesisErrors.length === 0 && consentErrors.length === 0,
-      patientErrors,
-      anamnesisErrors,
-      consentErrors
+      isValid: patientErrors.length === 0,
+      patientErrors
     };
   };
 
@@ -184,12 +159,6 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       
       if (validation.patientErrors.length > 0) {
         errorMsg += `Datos Personales: ${validation.patientErrors.join(', ')}\n`;
-      }
-      if (validation.anamnesisErrors.length > 0) {
-        errorMsg += `Anamnesis: ${validation.anamnesisErrors.join(', ')}\n`;
-      }
-      if (validation.consentErrors.length > 0) {
-        errorMsg += `Consentimiento: ${validation.consentErrors.join(', ')}\n`;
       }
 
       setMessage({ 
@@ -206,7 +175,7 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
       console.log('Datos de consentimiento:', consentData);
       console.log('User ID:', user.id);
 
-      const result = await saveCompletePatient(patientData, anamnesisData, consentData, user.id);
+      const result = await saveCompletePatient(patientData, anamnesisData, consentData, odontogramaData, user.id);
       
       if (result.success) {
         setMessage({ 
@@ -237,8 +206,8 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     switch (activeTab) {
       case 'odontograma':
         return <Odontograma 
-          patientData={patientData} 
-          setPatientData={setPatientData} 
+          onDataChange={setOdontogramaData}
+          initialData={odontogramaData}
         />;
       case 'datos':
         return <DatosPersonales 
@@ -320,41 +289,6 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
             ))}
           </div>
 
-          {/* Navegación por pasos */}
-          <div className="steps-navigation">
-            <button
-              className="step-nav-btn prev"
-              onClick={handlePrevious}
-              disabled={tabs.findIndex(tab => tab.id === activeTab) === 0}
-            >
-              <ChevronLeft size={18} />
-              <span>Anterior</span>
-            </button>
-
-            <div className="steps-indicator">
-              {tabs.map((tab, index) => (
-                <div key={tab.id} className="step-indicator">
-                  <div
-                    className={`step-dot ${activeTab === tab.id ? 'active' : ''} ${index < tabs.findIndex(t => t.id === activeTab) ? 'completed' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {index < tabs.findIndex(t => t.id === activeTab) ? <Check size={12} /> : index + 1}
-                  </div>
-                  <span className="step-label">{tab.label}</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              className="step-nav-btn next"
-              onClick={handleNext}
-              disabled={tabs.findIndex(tab => tab.id === activeTab) === tabs.length - 1}
-            >
-              <span>Siguiente</span>
-              <ChevronRight size={18} />
-            </button>
-          </div>
-
           {/* Contenido principal */}
           <div className="record-content">
             {renderContent()}
@@ -374,9 +308,6 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
               </span>
             </div>
             <div className="progress-actions">
-              <button className="btn-text">
-                Guardar y Continuar después
-              </button>
               <button 
                 className="btn-primary"
                 onClick={handleSaveAll}

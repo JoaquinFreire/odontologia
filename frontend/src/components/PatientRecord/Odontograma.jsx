@@ -1,287 +1,223 @@
-// components/PatientRecord/Odontograma.jsx
-import React, { useState } from 'react';
-import { Download, Printer, Save, Plus, Trash2 } from 'lucide-react';
-const Odontograma = ({ patientData, setPatientData }) => {
-  const [selectedTooth, setSelectedTooth] = useState(null);
-  const [selectedCondition, setSelectedCondition] = useState('healthy');
+import React, { useState, useEffect, useRef } from 'react';
+import '../../styles/Odontograma.css';
+
+const CONSTANTS = {
+  TOOTH_RADIUS: 22, 
+  INNER_RADIUS: 11, 
+  GAP: 15, 
+  ROW_GAP: 110, 
+  COLORS: {
+    RED: '#d32f2f',
+    BLUE: '#1976d2',
+    BLACK: '#333333',
+    WHITE: '#ffffff',
+    HOVER: 'rgba(0,0,0,0.05)'
+  }
+};
+
+const ADULTO_UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+const ADULTO_LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+const NINO_UPPER = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
+const NINO_LOWER = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
+
+const ToolGroup = ({ title, tools, selectedTool, onSelect }) => (
+  <div className="tool-group">
+    <h4>{title}</h4>
+    <div className="button-row">
+      {tools.map(t => (
+        <button 
+          key={t.id} 
+          className={`tool-btn-large ${selectedTool === t.id ? 'active' : ''} ${t.className || ''}`}
+          onClick={() => onSelect(t.id)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const SingleTooth = ({ id, x, y, data, onInteraction, isSelected }) => {
+  const { faces = {}, attributes = {} } = data;
+  const getColor = (state) => state === 'red' ? CONSTANTS.COLORS.RED : CONSTANTS.COLORS.BLUE;
+  const r1 = CONSTANTS.INNER_RADIUS;
+  const r2 = CONSTANTS.TOOTH_RADIUS;
   
-  // Condiciones dentales como en la imagen
-  const conditions = [
-    { id: 'caries', label: 'Caries', color: '#ff6b6b' },
-    { id: 'obturation', label: 'Obturación', color: '#4ecdc4' },
-    { id: 'crown', label: 'Corona', color: '#45b7d1' },
-    { id: 'crown-temp', label: 'Corona (Temp)', color: '#96ceb4' },
-    { id: 'absent', label: 'Ausente', color: '#999999' },
-    { id: 'fracture', label: 'Fractura', color: '#feca57' },
-    { id: 'diastema', label: 'Diastema', color: '#ff9ff3' },
-    { id: 'prosthesis-rem', label: 'Prótesis Rem', color: '#54a0ff' },
-    { id: 'migration', label: 'Migración', color: '#5f27cd' },
-    { id: 'rotation', label: 'Rotación', color: '#00d2d3' },
-    { id: 'fusion', label: 'Fusión', color: '#ff9f43' },
-    { id: 'remnant', label: 'Remanente', color: '#c8d6e5' },
-    { id: 'eruption', label: 'Erupción', color: '#1dd1a1' },
-    { id: 'transposition', label: 'Transposición', color: '#f368e0' },
-    { id: 'supernumerary', label: 'Supernumerario', color: '#ff9ff3' },
-    { id: 'pulpar', label: 'Pulpar', color: '#ee5a24' },
-    { id: 'prosthesis', label: 'Prótesis', color: '#1289A7' },
-    { id: 'perno', label: 'Perno', color: '#A3CB38' },
-    { id: 'ortho-fixed', label: 'Ortodoncia Fija', color: '#D980FA' },
-    { id: 'prosthesis-fixed', label: 'Prótesis Fija', color: '#FDA7DF' },
-    { id: 'implant', label: 'Implante', color: '#5758BB' },
-    { id: 'macrodontia', label: 'Macrodoncia', color: '#12CBC4' },
-    { id: 'microdontia', label: 'Microdoncia', color: '#C4E538' },
-    { id: 'dyschromia', label: 'Discromía', color: '#ED4C67' },
-    { id: 'worn', label: 'Desgastado', color: '#B53471' },
-    { id: 'semi-impacted', label: 'Semi-impactado', color: '#006266' },
-    { id: 'intrusion', label: 'Intrusión', color: '#6F1E51' },
-    { id: 'edentulism', label: 'Edentulismo', color: '#1B1464' },
-    { id: 'ectopic', label: 'Ectópico', color: '#009432' },
-    { id: 'impacted', label: 'Impactado', color: '#0652DD' },
-    { id: 'ortho-rem', label: 'Ortodoncia Rem', color: '#9980FA' },
-    { id: 'extrusion', label: 'Extrusión', color: '#833471' },
-    { id: 'post', label: 'Poste', color: '#ED4C67' },
-  ];
-
-  // Sistema de numeración dental
-  const adultTeeth = {
-    upper: [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28],
-    lower: [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
-  };
-
-  const childTeeth = {
-    upper: [55, 54, 53, 52, 51, 61, 62, 63, 64, 65],
-    lower: [85, 84, 83, 82, 81, 71, 72, 73, 74, 75]
-  };
-
-  const [dentalChart, setDentalChart] = useState(
-    adultTeeth.upper.concat(adultTeeth.lower).map(number => ({
-      number,
-      condition: 'healthy',
-      notes: ''
-    }))
-  );
-
-  const handleToothClick = (toothNumber) => {
-    setSelectedTooth(toothNumber);
-    const tooth = dentalChart.find(t => t.number === toothNumber);
-    if (tooth) {
-      setSelectedCondition(tooth.condition);
-    }
-  };
-
-  const applyCondition = () => {
-    if (!selectedTooth) return;
-    
-    setDentalChart(prev => 
-      prev.map(tooth => 
-        tooth.number === selectedTooth 
-          ? { ...tooth, condition: selectedCondition }
-          : tooth
-      )
-    );
-  };
-
-  const clearAll = () => {
-    setDentalChart(prev => 
-      prev.map(tooth => ({ ...tooth, condition: 'healthy' }))
-    );
-    setSelectedTooth(null);
-  };
-
-  const getToothColor = (conditionId) => {
-    const condition = conditions.find(c => c.id === conditionId);
-    return condition ? condition.color : '#e0e0e0';
+  const facePaths = {
+    top: `M ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} L ${-r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 1 ${r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} L ${r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 0 ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)}`,
+    bottom: `M ${-r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} L ${-r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 0 ${r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} L ${r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 1 ${-r1/Math.sqrt(2)} ${r1/Math.sqrt(2)}`,
+    left: `M ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} L ${-r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 0 ${-r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} L ${-r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 1 ${-r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)}`,
+    right: `M ${r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)} L ${r2/Math.sqrt(2)} ${-r2/Math.sqrt(2)} A ${r2} ${r2} 0 0 1 ${r2/Math.sqrt(2)} ${r2/Math.sqrt(2)} L ${r1/Math.sqrt(2)} ${r1/Math.sqrt(2)} A ${r1} ${r1} 0 0 0 ${r1/Math.sqrt(2)} ${-r1/Math.sqrt(2)}`
   };
 
   return (
-    <div className="odontograma-section">
-      <div className="section-header">
-        <h3>Odontograma</h3>
-        <div className="section-actions">
-          <button className="btn-outline small">
-            <Download size={16} />
-            <span>Guardar Diagrama</span>
-          </button>
-          <button className="btn-outline small">
-            <Printer size={16} />
-            <span>Imprimir</span>
-          </button>
-          <button className="btn-outline small" onClick={clearAll}>
-            <Trash2 size={16} />
-            <span>Limpiar Todo</span>
-          </button>
-        </div>
+    <g transform={`translate(${x}, ${y})`} onClick={(e) => onInteraction(e, id)} style={{ cursor: 'pointer' }}>
+      <circle r={r2 + 4} fill={isSelected ? 'rgba(255, 235, 59, 0.4)' : 'transparent'} />
+      {Object.entries(facePaths).map(([face, path]) => (
+        <path key={face} id={`face-${id}-${face}`} d={path} stroke={CONSTANTS.COLORS.BLACK} strokeWidth="1" fill={faces[face] ? getColor(faces[face]) : CONSTANTS.COLORS.WHITE} />
+      ))}
+      <circle id={`face-${id}-center`} r={r1} stroke={CONSTANTS.COLORS.BLACK} strokeWidth="1" fill={faces.center ? getColor(faces.center) : CONSTANTS.COLORS.WHITE} />
+      <g pointerEvents="none">
+        {attributes.crown && <circle r={r2 + 4} fill="none" stroke={getColor(attributes.crown)} strokeWidth="2.5" />}
+        {attributes.missing && (
+          <g stroke={getColor(attributes.missing)} strokeWidth="3">
+            <line x1={-r2} y1={-r2} x2={r2} y2={r2} /><line x1={r2} y1={-r2} x2={-r2} y2={r2} />
+          </g>
+        )}
+        {attributes.implant && <text y={r2 + 15} textAnchor="middle" fill={getColor(attributes.implant)} fontWeight="bold" fontSize="14">I</text>}
+        {attributes.endodontics && <text y={-r2 - 8} textAnchor="middle" fill={getColor(attributes.endodontics)} fontWeight="bold" fontSize="12">Tc</text>}
+      </g>
+      <text y={r2 + 32} textAnchor="middle" fontSize="13" fill="#333" fontWeight="bold" pointerEvents="none">{id}</text>
+    </g>
+  );
+};
+
+const Odontograma = ({ initialData, onDataChange }) => {
+  const [view, setView] = useState('adult'); 
+  const [data, setData] = useState(initialData || {
+    adult: { teethState: {}, connections: [] },
+    child: { teethState: {}, connections: [] }
+  });
+  const [selectedTool, setSelectedTool] = useState('cursor');
+  const [interactionStep, setInteractionStep] = useState(null);
+  const lastInitialData = useRef();
+
+  // Update internal state when initialData changes
+  useEffect(() => {
+    if (initialData && JSON.stringify(initialData) !== JSON.stringify(lastInitialData.current)) {
+      lastInitialData.current = initialData;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setData(initialData);
+    }
+  }, [initialData]);
+
+  // Notify parent when data changes
+  useEffect(() => {
+    if (onDataChange) {
+      onDataChange(data);
+    }
+  }, [data, onDataChange]);
+
+  const currentTeethUpper = view === 'adult' ? ADULTO_UPPER : NINO_UPPER;
+  const currentTeethLower = view === 'adult' ? ADULTO_LOWER : NINO_LOWER;
+
+  const getCoords = (id, currentView) => {
+    const teethU = currentView === 'adult' ? ADULTO_UPPER : NINO_UPPER;
+    const teethL = currentView === 'adult' ? ADULTO_LOWER : NINO_LOWER;
+    const isUpper = teethU.includes(id);
+    const index = isUpper ? teethU.indexOf(id) : teethL.indexOf(id);
+    if (index === -1) return null;
+
+    const offset = currentView === 'child' ? (ADULTO_UPPER.length - NINO_UPPER.length) * (CONSTANTS.TOOTH_RADIUS + CONSTANTS.GAP/2) : 0;
+    const x = 60 + offset + index * (CONSTANTS.TOOTH_RADIUS * 2 + CONSTANTS.GAP);
+    const y = isUpper ? 80 : 80 + CONSTANTS.TOOTH_RADIUS * 2 + CONSTANTS.ROW_GAP;
+    return { x, y, isUpper };
+  };
+
+  const handleToothInteraction = (e, id) => {
+    const targetId = e.target.id;
+    const viewData = data[view];
+
+    if (selectedTool.startsWith('face_') && targetId.startsWith('face-')) {
+      const face = targetId.split('-')[2];
+      const color = selectedTool.split('_')[1];
+      const tooth = viewData.teethState[id] || { faces: {}, attributes: {} };
+      const newFaces = { ...tooth.faces, [face]: tooth.faces[face] === color ? null : color };
+      setData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, faces: newFaces } } } });
+      return;
+    }
+
+    const toolPrefix = selectedTool.split('_')[0];
+    const attrMap = { crown: 'crown', missing: 'missing', tc: 'endodontics', imp: 'implant' };
+    if (attrMap[toolPrefix]) {
+      const color = selectedTool.split('_')[1];
+      const attrKey = attrMap[toolPrefix];
+      const tooth = viewData.teethState[id] || { faces: {}, attributes: {} };
+      const newVal = tooth.attributes[attrKey] === color ? null : color;
+      setData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, attributes: { ...tooth.attributes, [attrKey]: newVal } } } } });
+      return;
+    }
+
+    if (selectedTool.startsWith('bridge')) {
+      if (!interactionStep) {
+        setInteractionStep({ startId: id });
+      } else if (interactionStep.startId !== id) {
+        const parts = selectedTool.split('_');
+        const newConn = { start: interactionStep.startId, end: id, type: parts[1], color: parts[2] };
+        setData({ ...data, [view]: { ...viewData, connections: [...viewData.connections, newConn] } });
+        setInteractionStep(null);
+      }
+    }
+  };
+
+  return (
+    <div className="odontograma-app">
+      <div className="view-selector">
+        <button className={`view-btn ${view === 'adult' ? 'active' : ''}`} onClick={() => {setView('adult'); setInteractionStep(null);}}>Adulto</button>
+        <button className={`view-btn ${view === 'child' ? 'active' : ''}`} onClick={() => {setView('child'); setInteractionStep(null);}}>Niño</button>
       </div>
 
-      <div className="odontograma-container">
-        {/* Panel de condiciones */}
-        <div className="conditions-panel">
-          <h4>Condiciones Dentales</h4>
-          <div className="conditions-grid">
-            {conditions.map(condition => (
-              <button
-                key={condition.id}
-                className={`condition-btn ${selectedCondition === condition.id ? 'active' : ''}`}
-                onClick={() => setSelectedCondition(condition.id)}
-                style={{ 
-                  backgroundColor: condition.color,
-                  borderColor: selectedCondition === condition.id ? '#1a237e' : condition.color
-                }}
-              >
-                {condition.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Diagrama dental */}
-        <div className="dental-diagram">
-          {/* Arcada superior - Adulto */}
-          <div className="jaw-section">
-            <div className="jaw-label adult">Adulto - Arcada Superior</div>
-            <div className="teeth-row upper">
-              {adultTeeth.upper.map(number => {
-                const tooth = dentalChart.find(t => t.number === number);
-                return (
-                  <div
-                    key={`adult-upper-${number}`}
-                    className={`tooth ${selectedTooth === number ? 'selected' : ''}`}
-                    onClick={() => handleToothClick(number)}
-                    style={{ backgroundColor: getToothColor(tooth?.condition) }}
-                  >
-                    <span className="tooth-number">{number}</span>
-                    <span className="tooth-condition">
-                      {conditions.find(c => c.id === tooth?.condition)?.label || 'Sano'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Arcada inferior - Adulto */}
-          <div className="jaw-section">
-            <div className="jaw-label adult">Adulto - Arcada Inferior</div>
-            <div className="teeth-row lower">
-              {adultTeeth.lower.map(number => {
-                const tooth = dentalChart.find(t => t.number === number);
-                return (
-                  <div
-                    key={`adult-lower-${number}`}
-                    className={`tooth ${selectedTooth === number ? 'selected' : ''}`}
-                    onClick={() => handleToothClick(number)}
-                    style={{ backgroundColor: getToothColor(tooth?.condition) }}
-                  >
-                    <span className="tooth-number">{number}</span>
-                    <span className="tooth-condition">
-                      {conditions.find(c => c.id === tooth?.condition)?.label || 'Sano'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Diagrama infantil */}
-          <div className="child-diagram">
-            <h4>Diagrama Infantil (Dentición Temporal)</h4>
-            <div className="teeth-row upper">
-              {childTeeth.upper.map(number => (
-                <div key={`child-upper-${number}`} className="tooth child">
-                  <span className="tooth-number">{number}</span>
-                </div>
-              ))}
-            </div>
-            <div className="teeth-row lower">
-              {childTeeth.lower.map(number => (
-                <div key={`child-lower-${number}`} className="tooth child">
-                  <span className="tooth-number">{number}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Botón de aplicar */}
-          {selectedTooth && (
-            <div className="apply-section">
-              <p>Aplicar condición a diente {selectedTooth}:</p>
-              <div className="apply-actions">
-                <span className="selected-condition" style={{ backgroundColor: getToothColor(selectedCondition) }}>
-                  {conditions.find(c => c.id === selectedCondition)?.label}
-                </span>
-                <button className="btn-primary small" onClick={applyCondition}>
-                  Aplicar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="controls-panel">
+        <ToolGroup title="Básico" tools={[{id: 'cursor', label: 'Cursor'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Caries/Obt." tools={[{id: 'face_red', label: '●', className: 'text-red'}, {id: 'face_blue', label: '●', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Coronas" tools={[{id: 'crown_red', label: '○', className: 'text-red'}, {id: 'crown_blue', label: '○', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Pieza Aus." tools={[{id: 'missing_red', label: 'X', className: 'text-red'}, {id: 'missing_blue', label: 'X', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="TC / Imp" tools={[{id: 'tc_red', label: 'Tc', className: 'text-red'}, {id: 'tc_blue', label: 'Tc', className: 'text-blue'}, {id: 'imp_red', label: 'I', className: 'text-red'}, {id: 'imp_blue', label: 'I', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Prót. Fija" tools={[{id: 'bridge_fixed_red', label: '▭', className: 'text-red'}, {id: 'bridge_fixed_blue', label: '▭', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
+        <ToolGroup title="Prót. Rem." tools={[{id: 'bridge_removable_red', label: '⟷', className: 'text-red'}, {id: 'bridge_removable_blue', label: '⟷', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={(id) => {setSelectedTool(id); setInteractionStep(null);}} />
       </div>
 
-      {/* Observaciones y número de elementos */}
-      <div className="odontograma-notes">
-        <div className="notes-section">
-          <h4>Observaciones Odontológicas</h4>
-          <textarea
-            className="notes-textarea"
-            value={patientData.dentalObservations}
-            onChange={(e) => setPatientData({
-              ...patientData,
-              dentalObservations: e.target.value
-            })}
-            placeholder="Ingrese observaciones sobre el estado dental del paciente..."
-            rows="4"
-          />
-        </div>
+      <div className="svg-container">
+        <svg viewBox="0 0 1000 350" className="odontograma-svg">
+          {data[view].connections.map((conn, i) => {
+            const s = getCoords(conn.start, view);
+            const e = getCoords(conn.end, view);
+            if (!s || !e) return null;
+            const color = conn.color === 'red' ? CONSTANTS.COLORS.RED : CONSTANTS.COLORS.BLUE;
 
-        <div className="elements-section">
-          <h4>Número de Elementos</h4>
-          <div className="elements-input">
-            <input
-              type="number"
-              min="1"
-              max="32"
-              value={patientData.elements}
-              onChange={(e) => setPatientData({
-                ...patientData,
-                elements: e.target.value
-              })}
-            />
-            <span className="elements-hint">(Máx. 32 dientes)</span>
-          </div>
-          <div className="elements-summary">
-            <p>Elementos presentes: <strong>{dentalChart.filter(t => t.condition !== 'absent').length}</strong></p>
-            <p>Elementos ausentes: <strong>{dentalChart.filter(t => t.condition === 'absent').length}</strong></p>
-          </div>
-        </div>
+            if (conn.type === 'fixed') {
+              const xMin = Math.min(s.x, e.x) - CONSTANTS.TOOTH_RADIUS - 2;
+              const xMax = Math.max(s.x, e.x) + CONSTANTS.TOOTH_RADIUS + 2;
+              const yMin = s.y - CONSTANTS.TOOTH_RADIUS - 2;
+              return (
+                <g key={i} onClick={() => {
+                  const newConns = data[view].connections.filter((_, idx) => idx !== i);
+                  setData({...data, [view]: {...data[view], connections: newConns}});
+                }} style={{cursor:'pointer'}}>
+                  <rect x={xMin} y={yMin} width={xMax - xMin} height={CONSTANTS.TOOTH_RADIUS * 2 + 4} fill="none" stroke={color} strokeWidth="3" rx="4" />
+                  <circle cx={(xMin + xMax)/2} cy={yMin} r="8" fill="#444" /><text x={(xMin + xMax)/2} y={yMin + 4} textAnchor="middle" fill="white" fontSize="10">x</text>
+                </g>
+              );
+            } else {
+              const x1 = s.x; const x2 = e.x;
+              const yBase = s.y + (s.isUpper ? -CONSTANTS.TOOTH_RADIUS : CONSTANTS.TOOTH_RADIUS);
+              const yLine = yBase + (s.isUpper ? -25 : 25);
+              return (
+                <g key={i} onClick={() => {
+                   const newConns = data[view].connections.filter((_, idx) => idx !== i);
+                   setData({...data, [view]: {...data[view], connections: newConns}});
+                }} style={{cursor:'pointer'}}>
+                  <path d={`M ${x1} ${yBase} L ${x1} ${yLine} L ${x2} ${yLine} L ${x2} ${yBase}`} stroke={color} strokeWidth="3" fill="none" />
+                  <circle cx={(x1+x2)/2} cy={yLine} r="8" fill="#444" /><text x={(x1+x2)/2} y={yLine+4} textAnchor="middle" fill="white" fontSize="10">x</text>
+                </g>
+              );
+            }
+          })}
+
+          {currentTeethUpper.map(id => <SingleTooth key={id} id={id} {...getCoords(id, view)} data={data[view].teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
+          <line x1="40" y1="175" x2="960" y2="175" stroke="#eee" strokeWidth="2" />
+          {currentTeethLower.map(id => <SingleTooth key={id} id={id} {...getCoords(id, view)} data={data[view].teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
+        </svg>
       </div>
 
-      <div className="treatment-plan">
-        <h4>Plan de Tratamiento</h4>
-        <div className="plan-items">
-          {dentalChart
-            .filter(tooth => tooth.condition === 'caries' || tooth.condition === 'fracture')
-            .map(tooth => (
-              <div key={`plan-${tooth.number}`} className="plan-item">
-                <div className="plan-info">
-                  <span className="plan-tooth">Diente {tooth.number}</span>
-                  <span className="plan-treatment">
-                    {tooth.condition === 'caries' ? 'Tratamiento de caries' : 'Reparación de fractura'}
-                  </span>
-                </div>
-                <span className="plan-status pending">Pendiente</span>
-              </div>
-            ))}
+      <div className="json-outputs-row">
+        <div className="json-box">
+          <h5>ESTADO ADULTO</h5>
+          <pre>{JSON.stringify(data.adult, null, 2)}</pre>
         </div>
-        <button className="btn-outline">
-          <Plus size={16} />
-          <span>Agregar Tratamiento</span>
-        </button>
-        <div className="notes-actions">
-          <button className="btn-primary">
-            <Save size={16} />
-            <span>Guardar Odontograma</span>
-          </button>
+        <div className="json-box">
+          <h5>ESTADO NIÑO</h5>
+          <pre>{(Object.keys(data.child.teethState).length > 0 || data.child.connections.length > 0) ? JSON.stringify(data.child, null, 2) : "{}"}</pre>
         </div>
       </div>
     </div>
