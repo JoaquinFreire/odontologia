@@ -3,6 +3,55 @@ import React from 'react';
 import { Save, CheckCircle, X } from 'lucide-react';
 
 const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
+  // Arrays fijos de enfermedades para evitar duplicados
+  const diseasesColumn1 = [
+    'diabetes', 'hypertension', 'rheumaticFever', 'boneDiseases', 'arthritis',
+    'muscleDiseases', 'asthma', 'respiratoryDiseases', 'sinusitis', 'jointDiseases',
+    'hepatitis', 'kidneyDiseases', 'liverDiseases', 'congenitalDiseases', 'chagas'
+  ];
+
+  const diseasesColumn2 = [
+    'headaches', 'epilepsy', 'psychiatric', 'unconsciousness', 'heartDiseases',
+    'consumesAlcohol', 'bloodDiseases', 'consumesTobacco', 'lymphDiseases',
+    'surgeries', 'skinDiseases', 'receivedTransfusions', 'std', 'receivedDialysis',
+    'chronicInfections', 'operations', 'glandularDiseases'
+  ];
+
+  const diseaseLabels = {
+    diabetes: 'Diabetes',
+    hypertension: 'Hipertensión arterial',
+    rheumaticFever: 'Fiebre Reumática',
+    boneDiseases: 'Enfermedades de los huesos',
+    arthritis: 'Artritis - Artrosis',
+    muscleDiseases: 'Enfermedades musculares',
+    asthma: 'Asma',
+    respiratoryDiseases: 'Enfermedades respiratorias',
+    sinusitis: 'Sinusitis - Otitis - Anginas',
+    jointDiseases: 'Enfermedades articulares',
+    hepatitis: 'Hepatitis',
+    kidneyDiseases: 'Enfermedades renales',
+    liverDiseases: 'Enf. del hígado',
+    congenitalDiseases: 'Enfermedades congénitas',
+    chagas: 'Chagas',
+    headaches: 'Dolores de cabeza - Mareos',
+    epilepsy: 'Convulsiones - Epilepsia',
+    psychiatric: 'Enfermedades psiquiátricas',
+    unconsciousness: 'Pérdida de conocimiento',
+    heartDiseases: 'Enfermedades cardíacas',
+    consumesAlcohol: 'Consume alcohol',
+    bloodDiseases: 'Enfermedades de la sangre',
+    consumesTobacco: 'Consume Tabaco',
+    lymphDiseases: 'Enfermedades de ganglios',
+    surgeries: 'Intervenciones quirúrgicas',
+    skinDiseases: 'Enfermedades de la piel',
+    receivedTransfusions: 'Recibió transfusiones',
+    std: 'Enf. de transmisión sexual',
+    receivedDialysis: 'Recibió hemodiálisis',
+    chronicInfections: 'Infecciones crónicas',
+    operations: 'Operaciones',
+    glandularDiseases: 'Enfermedades glandulares'
+  };
+
   const handleDiseaseChange = (disease, value) => {
     setAnamnesisData(prev => ({
       ...prev,
@@ -13,45 +62,51 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
     }));
   };
 
-  const renderYesNoGroup = (title, stateKey, state) => {
-    const isYes = state[stateKey];
+  const getNestedValue = (path) => {
+    const keys = path.split('.');
+    let value = anamnesisData;
+    for (let key of keys) {
+      value = value?.[key];
+    }
+    return value;
+  };
+
+  const setNestedValue = (path, value) => {
+    const keys = path.split('.');
+    const lastKey = keys.pop();
+    
+    setAnamnesisData(prev => {
+      const newData = JSON.parse(JSON.stringify(prev));
+      let target = newData;
+      
+      for (let key of keys) {
+        if (!target[key]) target[key] = {};
+        target = target[key];
+      }
+      
+      target[lastKey] = value;
+      return newData;
+    });
+  };
+
+  const renderYesNoGroup = (title, stateKey, description = null) => {
+    const currentValue = getNestedValue(stateKey);
     
     return (
       <div className="yes-no-group">
         <h5>{title}</h5>
+        {description && <p className="group-description">{description}</p>}
         <div className="yes-no-buttons">
           <button
-            className={`yes-no-btn ${isYes ? 'active' : ''}`}
-            onClick={() => {
-              if (stateKey.includes('.')) {
-                const [parent, child] = stateKey.split('.');
-                setAnamnesisData(prev => ({
-                  ...prev,
-                  [parent]: { ...prev[parent], [child]: true }
-                }));
-              } else {
-                setAnamnesisData(prev => ({ ...prev, [stateKey]: true }));
-              }
-            }}
+            className={`yes-no-btn ${currentValue === true ? 'active' : ''}`}
+            onClick={() => setNestedValue(stateKey, true)}
           >
-            <CheckCircle size={16} />
             SI
           </button>
           <button
-            className={`yes-no-btn ${!isYes ? 'active' : ''}`}
-            onClick={() => {
-              if (stateKey.includes('.')) {
-                const [parent, child] = stateKey.split('.');
-                setAnamnesisData(prev => ({
-                  ...prev,
-                  [parent]: { ...prev[parent], [child]: false }
-                }));
-              } else {
-                setAnamnesisData(prev => ({ ...prev, [stateKey]: false }));
-              }
-            }}
+            className={`yes-no-btn ${currentValue === false ? 'active' : ''}`}
+            onClick={() => setNestedValue(stateKey, false)}
           >
-            <X size={16} />
             NO
           </button>
         </div>
@@ -63,14 +118,11 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
     <div className="anamnesis-section">
       <div className="section-header">
         <h3>Historia Clínica - Anamnesis</h3>
-        <button className="btn-primary">
-          <Save size={18} />
-          <span>Guardar Historia</span>
-        </button>
+        <p className="section-subtitle">Completa la información médica del paciente</p>
       </div>
 
       <div className="anamnesis-form">
-        {/* Sección 1 */}
+        {/* Sección 1 - Datos Médicos Generales */}
         <div className="anamnesis-part">
           <h4>(1) Datos Médicos Generales</h4>
           <div className="form-row">
@@ -107,10 +159,10 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
             />
           </div>
 
-          {renderYesNoGroup('¿Es alérgico a algún medicamento, antibiótico, polen, picadura de insecto, etc.?', 'allergies.hasAllergies', anamnesisData)}
+          {renderYesNoGroup('¿Es alérgico a algún medicamento, antibiótico, polen, picadura de insecto, etc.?', 'allergies.hasAllergies')}
           
           {anamnesisData.allergies.hasAllergies && (
-            <div className="form-group">
+            <div className="form-group conditional-field">
               <label htmlFor="allergiesDescription">¿A qué?</label>
               <input
                 type="text"
@@ -125,10 +177,10 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
             </div>
           )}
 
-          {renderYesNoGroup('¿Está bajo tratamiento médico?', 'currentTreatment.underTreatment', anamnesisData)}
+          {renderYesNoGroup('¿Está bajo tratamiento médico?', 'currentTreatment.underTreatment')}
           
           {anamnesisData.currentTreatment.underTreatment && (
-            <div className="form-group">
+            <div className="form-group conditional-field">
               <label htmlFor="treatmentDescription">¿Cuál/Cuáles?</label>
               <input
                 type="text"
@@ -143,10 +195,10 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
             </div>
           )}
 
-          {renderYesNoGroup('¿Fue hospitalizado el último año?', 'hospitalization.wasHospitalized', anamnesisData)}
+          {renderYesNoGroup('¿Fue hospitalizado el último año?', 'hospitalization.wasHospitalized')}
           
           {anamnesisData.hospitalization.wasHospitalized && (
-            <div className="form-group">
+            <div className="form-group conditional-field">
               <label htmlFor="hospitalizationReason">¿Por qué razón?</label>
               <input
                 type="text"
@@ -162,11 +214,11 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
           )}
         </div>
 
-        {/* Sección 2 */}
+        {/* Sección 2 - Historial Médico */}
         <div className="anamnesis-part">
           <h4>(2) Historial Médico</h4>
           
-          {renderYesNoGroup('¿Tiene o tuvo alguna vez problemas para cicatrizar?', 'healingProblems', anamnesisData)}
+          {renderYesNoGroup('¿Tiene o tuvo alguna vez problemas para cicatrizar?', 'healingProblems')}
 
           <div className="form-row">
             <div className="form-group">
@@ -197,10 +249,10 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
             </div>
           </div>
 
-          {renderYesNoGroup('¿Toma algún medicamento?', 'takesMedication', anamnesisData)}
+          {renderYesNoGroup('¿Toma algún medicamento?', 'takesMedication')}
           
           {anamnesisData.takesMedication && (
-            <div className="form-group">
+            <div className="form-group conditional-field">
               <label htmlFor="medication">¿Cuál/Cuáles?</label>
               <input
                 type="text"
@@ -212,11 +264,11 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
             </div>
           )}
 
-          {renderYesNoGroup('¿Está Ud. embarazada?', 'isPregnant', anamnesisData)}
+          {renderYesNoGroup('¿Está Ud. embarazada?', 'isPregnant')}
           
           {anamnesisData.isPregnant && (
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group conditional-field">
                 <label htmlFor="pregnancyTime">Tiempo gestacional</label>
                 <input
                   type="text"
@@ -226,7 +278,7 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
                   placeholder="Ej: 12 semanas"
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group conditional-field">
                 <label htmlFor="obstetrician">Obstetra</label>
                 <input
                   type="text"
@@ -236,7 +288,7 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
                   placeholder="Nombre del obstetra"
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group conditional-field">
                 <label htmlFor="obstetricianPhone">Teléfono</label>
                 <input
                   type="tel"
@@ -250,7 +302,7 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
           )}
         </div>
 
-        {/* Sección 3 - Enfermedades */}
+        {/* Sección 3 - Enfermedades (SIN OBLIGATORIEDAD) */}
         <div className="anamnesis-part">
           <h4>(3) Antecedentes Patológicos</h4>
           <p className="section-subtitle">Marcar con una X aquellas opciones que resulten positivas</p>
@@ -258,69 +310,30 @@ const Anamnesis = ({ anamnesisData, setAnamnesisData }) => {
           <div className="diseases-grid">
             {/* Columna 1 */}
             <div className="disease-column">
-              {[
-                'diabetes', 'hypertension', 'rheumaticFever', 'boneDiseases', 'arthritis',
-                'muscleDiseases', 'asthma', 'respiratoryDiseases', 'sinusitis', 'jointDiseases',
-                'hepatitis', 'kidneyDiseases', 'liverDiseases', 'congenitalDiseases', 'chagas'
-              ].map(disease => (
+              {diseasesColumn1.map(disease => (
                 <label key={disease} className="checkbox-label disease">
                   <input
                     type="checkbox"
-                    checked={anamnesisData.diseases[disease]}
+                    checked={anamnesisData.diseases[disease] || false}
                     onChange={(e) => handleDiseaseChange(disease, e.target.checked)}
                   />
                   <span className="checkmark"></span>
-                  {disease === 'diabetes' ? 'Diabetes' :
-                   disease === 'hypertension' ? 'Hipertensión arterial' :
-                   disease === 'rheumaticFever' ? 'Fiebre Reumática' :
-                   disease === 'boneDiseases' ? 'Enfermedades de los huesos' :
-                   disease === 'arthritis' ? 'Artritis - Artrosis' :
-                   disease === 'muscleDiseases' ? 'Enfermedades musculares' :
-                   disease === 'asthma' ? 'Asma' :
-                   disease === 'respiratoryDiseases' ? 'Enfermedades respiratorias' :
-                   disease === 'sinusitis' ? 'Sinusitis - Otitis - Anginas' :
-                   disease === 'jointDiseases' ? 'Enfermedades articulares' :
-                   disease === 'hepatitis' ? 'Hepatitis' :
-                   disease === 'kidneyDiseases' ? 'Enfermedades renales' :
-                   disease === 'liverDiseases' ? 'Enf. del hígado' :
-                   disease === 'congenitalDiseases' ? 'Enfermedades congénitas' :
-                   'Chagas'}
+                  {diseaseLabels[disease]}
                 </label>
               ))}
             </div>
 
             {/* Columna 2 */}
             <div className="disease-column">
-              {[
-                'headaches', 'epilepsy', 'psychiatric', 'unconsciousness', 'heartDiseases',
-                'consumesAlcohol', 'bloodDiseases', 'consumesTobacco', 'lymphDiseases',
-                'surgeries', 'skinDiseases', 'receivedTransfusions', 'std', 'receivedDialysis',
-                'chronicInfections', 'operations', 'glandularDiseases'
-              ].map(disease => (
+              {diseasesColumn2.map(disease => (
                 <label key={disease} className="checkbox-label disease">
                   <input
                     type="checkbox"
-                    checked={anamnesisData.diseases[disease]}
+                    checked={anamnesisData.diseases[disease] || false}
                     onChange={(e) => handleDiseaseChange(disease, e.target.checked)}
                   />
                   <span className="checkmark"></span>
-                  {disease === 'headaches' ? 'Dolores de cabeza - Mareos' :
-                   disease === 'epilepsy' ? 'Convulsiones - Epilepsia' :
-                   disease === 'psychiatric' ? 'Enfermedades psiquiátricas' :
-                   disease === 'unconsciousness' ? 'Pérdida de conocimiento' :
-                   disease === 'heartDiseases' ? 'Enfermedades cardíacas' :
-                   disease === 'consumesAlcohol' ? 'Consume alcohol' :
-                   disease === 'bloodDiseases' ? 'Enfermedades de la sangre' :
-                   disease === 'consumesTobacco' ? 'Consume Tabaco' :
-                   disease === 'lymphDiseases' ? 'Enfermedades de ganglios' :
-                   disease === 'surgeries' ? 'Intervenciones quirúrgicas' :
-                   disease === 'skinDiseases' ? 'Enfermedades de la piel' :
-                   disease === 'receivedTransfusions' ? 'Recibió transfusiones' :
-                   disease === 'std' ? 'Enf. de transmisión sexual' :
-                   disease === 'receivedDialysis' ? 'Recibió hemodiálisis' :
-                   disease === 'chronicInfections' ? 'Infecciones crónicas' :
-                   disease === 'operations' ? 'Operaciones' :
-                   'Enfermedades glandulares'}
+                  {diseaseLabels[disease]}
                 </label>
               ))}
             </div>

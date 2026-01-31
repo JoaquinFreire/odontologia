@@ -1,288 +1,228 @@
-// components/PatientRecord/Odontograma.jsx
 import React, { useState } from 'react';
-import { Download, Printer, Save, Plus, Trash2 } from 'lucide-react';
-const Odontograma = ({ patientData, setPatientData }) => {
-  const [selectedTooth, setSelectedTooth] = useState(null);
-  const [selectedCondition, setSelectedCondition] = useState('healthy');
-  
-  // Condiciones dentales como en la imagen
-  const conditions = [
-    { id: 'caries', label: 'Caries', color: '#ff6b6b' },
-    { id: 'obturation', label: 'Obturación', color: '#4ecdc4' },
-    { id: 'crown', label: 'Corona', color: '#45b7d1' },
-    { id: 'crown-temp', label: 'Corona (Temp)', color: '#96ceb4' },
-    { id: 'absent', label: 'Ausente', color: '#999999' },
-    { id: 'fracture', label: 'Fractura', color: '#feca57' },
-    { id: 'diastema', label: 'Diastema', color: '#ff9ff3' },
-    { id: 'prosthesis-rem', label: 'Prótesis Rem', color: '#54a0ff' },
-    { id: 'migration', label: 'Migración', color: '#5f27cd' },
-    { id: 'rotation', label: 'Rotación', color: '#00d2d3' },
-    { id: 'fusion', label: 'Fusión', color: '#ff9f43' },
-    { id: 'remnant', label: 'Remanente', color: '#c8d6e5' },
-    { id: 'eruption', label: 'Erupción', color: '#1dd1a1' },
-    { id: 'transposition', label: 'Transposición', color: '#f368e0' },
-    { id: 'supernumerary', label: 'Supernumerario', color: '#ff9ff3' },
-    { id: 'pulpar', label: 'Pulpar', color: '#ee5a24' },
-    { id: 'prosthesis', label: 'Prótesis', color: '#1289A7' },
-    { id: 'perno', label: 'Perno', color: '#A3CB38' },
-    { id: 'ortho-fixed', label: 'Ortodoncia Fija', color: '#D980FA' },
-    { id: 'prosthesis-fixed', label: 'Prótesis Fija', color: '#FDA7DF' },
-    { id: 'implant', label: 'Implante', color: '#5758BB' },
-    { id: 'macrodontia', label: 'Macrodoncia', color: '#12CBC4' },
-    { id: 'microdontia', label: 'Microdoncia', color: '#C4E538' },
-    { id: 'dyschromia', label: 'Discromía', color: '#ED4C67' },
-    { id: 'worn', label: 'Desgastado', color: '#B53471' },
-    { id: 'semi-impacted', label: 'Semi-impactado', color: '#006266' },
-    { id: 'intrusion', label: 'Intrusión', color: '#6F1E51' },
-    { id: 'edentulism', label: 'Edentulismo', color: '#1B1464' },
-    { id: 'ectopic', label: 'Ectópico', color: '#009432' },
-    { id: 'impacted', label: 'Impactado', color: '#0652DD' },
-    { id: 'ortho-rem', label: 'Ortodoncia Rem', color: '#9980FA' },
-    { id: 'extrusion', label: 'Extrusión', color: '#833471' },
-    { id: 'post', label: 'Poste', color: '#ED4C67' },
-  ];
+import '../../styles/Odontograma.css';
 
-  // Sistema de numeración dental
-  const adultTeeth = {
-    upper: [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28],
-    lower: [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
-  };
+// 1. CONFIGURACIÓN Y CONSTANTES (Fuera para que no se re-creen)
+const CONSTANTS = {
+  TOOTH_SIZE: 40,
+  CELL_SIZE: 40 / 3,
+  GAP: 12, 
+  ROW_GAP: 80, 
+  COLORS: {
+    RED: '#d32f2f',
+    BLUE: '#1976d2',
+    BLACK: '#333333',
+    WHITE: '#ffffff',
+    HOVER: 'rgba(0,0,0,0.08)'
+  }
+};
 
-  const childTeeth = {
-    upper: [55, 54, 53, 52, 51, 61, 62, 63, 64, 65],
-    lower: [85, 84, 83, 82, 81, 71, 72, 73, 74, 75]
-  };
+const teethUpper = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+const teethLower = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
-  const [dentalChart, setDentalChart] = useState(
-    adultTeeth.upper.concat(adultTeeth.lower).map(number => ({
-      number,
-      condition: 'healthy',
-      notes: ''
-    }))
+const facesMap = {
+  top: { x: 1, y: 0 },
+  left: { x: 0, y: 1 },
+  center: { x: 1, y: 1 },
+  right: { x: 2, y: 1 },
+  bottom: { x: 1, y: 2 }
+};
+
+// 2. COMPONENTES AUXILIARES (Definidos fuera del render principal)
+const ToolGroup = ({ title, tools, selectedTool, onSelect }) => (
+  <div className="tool-group">
+    <h4>{title}</h4>
+    <div className="button-row">
+      {tools.map(t => (
+        <button 
+          key={t.id} 
+          className={`tool-btn ${selectedTool === t.id ? 'active' : ''} ${t.className || ''}`}
+          onClick={() => onSelect(t.id)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const SingleTooth = ({ id, x, y, data, onInteraction, isSelected }) => {
+  const [hover, setHover] = useState(false);
+  const { faces = {}, attributes = {} } = data;
+  const getColor = (state) => state === 'red' ? CONSTANTS.COLORS.RED : CONSTANTS.COLORS.BLUE;
+
+  return (
+    <g 
+      transform={`translate(${x}, ${y})`} 
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ cursor: 'pointer' }}
+      onClick={(e) => onInteraction(e, id)}
+    >
+      <rect 
+        x={-2} y={-2} 
+        width={CONSTANTS.TOOTH_SIZE + 4} height={CONSTANTS.TOOTH_SIZE + 4}
+        fill={isSelected ? 'rgba(255, 235, 59, 0.4)' : (hover ? CONSTANTS.COLORS.HOVER : 'transparent')}
+        rx="4"
+      />
+
+      {Object.entries(facesMap).map(([face, coords]) => (
+        <rect
+          key={face}
+          id={`face-${id}-${face}`}
+          x={coords.x * CONSTANTS.CELL_SIZE}
+          y={coords.y * CONSTANTS.CELL_SIZE}
+          width={CONSTANTS.CELL_SIZE}
+          height={CONSTANTS.CELL_SIZE}
+          stroke={CONSTANTS.COLORS.BLACK}
+          strokeWidth="0.5"
+          fill={faces[face] ? getColor(faces[face]) : CONSTANTS.COLORS.WHITE}
+          pointerEvents="all"
+        />
+      ))}
+
+      <g pointerEvents="none">
+        {attributes.crown && (
+          <circle 
+            cx={CONSTANTS.TOOTH_SIZE / 2} cy={CONSTANTS.TOOTH_SIZE / 2} 
+            r={CONSTANTS.TOOTH_SIZE / 2 + 3}
+            fill="none" stroke={getColor(attributes.crown)} strokeWidth="2.5"
+          />
+        )}
+        {attributes.missing && (
+          <g stroke={getColor(attributes.missing)} strokeWidth="3">
+             <line x1={0} y1={0} x2={CONSTANTS.TOOTH_SIZE} y2={CONSTANTS.TOOTH_SIZE} />
+             <line x1={CONSTANTS.TOOTH_SIZE} y1={0} x2={0} y2={CONSTANTS.TOOTH_SIZE} />
+          </g>
+        )}
+        {attributes.implant && (
+          <text x={CONSTANTS.TOOTH_SIZE / 2} y={CONSTANTS.TOOTH_SIZE + 18} textAnchor="middle" fill={getColor(attributes.implant)} fontWeight="bold" fontSize="16">I</text>
+        )}
+        {attributes.endodontics && (
+          <text x={CONSTANTS.TOOTH_SIZE / 2} y={-8} textAnchor="middle" fill={getColor(attributes.endodontics)} fontWeight="bold" fontSize="14">Tc</text>
+        )}
+      </g>
+
+      <text x={CONSTANTS.TOOTH_SIZE / 2} y={CONSTANTS.TOOTH_SIZE + 32} textAnchor="middle" fontSize="11" fill="#444" fontWeight="bold" pointerEvents="none">
+        {id}
+      </text>
+    </g>
   );
+};
 
-  const handleToothClick = (toothNumber) => {
-    setSelectedTooth(toothNumber);
-    const tooth = dentalChart.find(t => t.number === toothNumber);
-    if (tooth) {
-      setSelectedCondition(tooth.condition);
+// 3. COMPONENTE PRINCIPAL
+const Odontograma = () => {
+  const [teethState, setTeethState] = useState({});
+  const [connections, setConnections] = useState([]);
+  const [selectedTool, setSelectedTool] = useState('cursor');
+  const [interactionStep, setInteractionStep] = useState(null);
+
+  const getCoords = (id) => {
+    const isUpper = teethUpper.includes(id);
+    const index = isUpper ? teethUpper.indexOf(id) : teethLower.indexOf(id);
+    // Margen izquierdo aumentado (60) para que el 18 no esté pegado al borde
+    const x = 60 + index * (CONSTANTS.TOOTH_SIZE + CONSTANTS.GAP);
+    const y = isUpper ? 60 : 60 + CONSTANTS.TOOTH_SIZE + CONSTANTS.ROW_GAP;
+    return { x, y, isUpper };
+  };
+
+  const handleToolSelect = (toolId) => {
+    setSelectedTool(toolId);
+    setInteractionStep(null);
+  };
+
+  const handleToothInteraction = (e, id) => {
+    const targetId = e.target.id;
+    
+    // Caras
+    if (selectedTool.startsWith('face_') && targetId.startsWith('face-')) {
+      const face = targetId.split('-')[2];
+      const color = selectedTool.split('_')[1];
+      setTeethState(prev => {
+        const tooth = prev[id] || { faces: {}, attributes: {} };
+        const newFaceState = tooth.faces[face] === color ? null : color;
+        return { ...prev, [id]: { ...tooth, faces: { ...tooth.faces, [face]: newFaceState } } };
+      });
+      return;
+    }
+
+    // Atributos
+    const toolPrefix = selectedTool.split('_')[0];
+    const attrMap = { crown: 'crown', missing: 'missing', tc: 'endodontics', imp: 'implant' };
+    if (attrMap[toolPrefix]) {
+      const color = selectedTool.split('_')[1];
+      const attrKey = attrMap[toolPrefix];
+      setTeethState(prev => {
+        const tooth = prev[id] || { faces: {}, attributes: {} };
+        const newVal = tooth.attributes[attrKey] === color ? null : color;
+        return { ...prev, [id]: { ...tooth, attributes: { ...tooth.attributes, [attrKey]: newVal } } };
+      });
+      return;
+    }
+
+    // Puentes
+    if (selectedTool.startsWith('bridge')) {
+      if (!interactionStep) {
+        setInteractionStep({ startId: id });
+      } else {
+        if (interactionStep.startId !== id) {
+          const parts = selectedTool.split('_');
+          const type = parts[1]; // fixed o removable
+          const color = parts[2]; // red o blue
+          setConnections(prev => [...prev, { start: interactionStep.startId, end: id, type, color }]);
+          setInteractionStep(null);
+        }
+      }
     }
   };
 
-  const applyCondition = () => {
-    if (!selectedTooth) return;
-    
-    setDentalChart(prev => 
-      prev.map(tooth => 
-        tooth.number === selectedTooth 
-          ? { ...tooth, condition: selectedCondition }
-          : tooth
-      )
-    );
-  };
-
-  const clearAll = () => {
-    setDentalChart(prev => 
-      prev.map(tooth => ({ ...tooth, condition: 'healthy' }))
-    );
-    setSelectedTooth(null);
-  };
-
-  const getToothColor = (conditionId) => {
-    const condition = conditions.find(c => c.id === conditionId);
-    return condition ? condition.color : '#e0e0e0';
-  };
-
   return (
-    <div className="odontograma-section">
-      <div className="section-header">
-        <h3>Odontograma</h3>
-        <div className="section-actions">
-          <button className="btn-outline small">
-            <Download size={16} />
-            <span>Guardar Diagrama</span>
-          </button>
-          <button className="btn-outline small">
-            <Printer size={16} />
-            <span>Imprimir</span>
-          </button>
-          <button className="btn-outline small" onClick={clearAll}>
-            <Trash2 size={16} />
-            <span>Limpiar Todo</span>
-          </button>
-        </div>
+    <div className="odontograma-app">
+      <div className="controls-panel">
+        <ToolGroup title="Básico" tools={[{id: 'cursor', label: 'Cursor'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Caras" tools={[{id: 'face_red', label: '●', className: 'text-red'}, {id: 'face_blue', label: '●', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Corona" tools={[{id: 'crown_red', label: '○', className: 'text-red'}, {id: 'crown_blue', label: '○', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Extracción" tools={[{id: 'missing_red', label: 'X', className: 'text-red'}, {id: 'missing_blue', label: 'X', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Endodoncia" tools={[{id: 'tc_red', label: 'Tc', className: 'text-red'}, {id: 'tc_blue', label: 'Tc', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Implante" tools={[{id: 'imp_red', label: 'I', className: 'text-red'}, {id: 'imp_blue', label: 'I', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Fija" tools={[{id: 'bridge_fixed_red', label: '⟷', className: 'text-red'}, {id: 'bridge_fixed_blue', label: '⟷', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
+        <ToolGroup title="Removible" tools={[{id: 'bridge_removable_red', label: '[--]', className: 'text-red'}, {id: 'bridge_removable_blue', label: '[--]', className: 'text-blue'}]} selectedTool={selectedTool} onSelect={handleToolSelect} />
       </div>
 
-      <div className="odontograma-container">
-        {/* Panel de condiciones */}
-        <div className="conditions-panel">
-          <h4>Condiciones Dentales</h4>
-          <div className="conditions-grid">
-            {conditions.map(condition => (
-              <button
-                key={condition.id}
-                className={`condition-btn ${selectedCondition === condition.id ? 'active' : ''}`}
-                onClick={() => setSelectedCondition(condition.id)}
-                style={{ 
-                  backgroundColor: condition.color,
-                  borderColor: selectedCondition === condition.id ? '#1a237e' : condition.color
-                }}
-              >
-                {condition.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Diagrama dental */}
-        <div className="dental-diagram">
-          {/* Arcada superior - Adulto */}
-          <div className="jaw-section">
-            <div className="jaw-label adult">Adulto - Arcada Superior</div>
-            <div className="teeth-row upper">
-              {adultTeeth.upper.map(number => {
-                const tooth = dentalChart.find(t => t.number === number);
-                return (
-                  <div
-                    key={`adult-upper-${number}`}
-                    className={`tooth ${selectedTooth === number ? 'selected' : ''}`}
-                    onClick={() => handleToothClick(number)}
-                    style={{ backgroundColor: getToothColor(tooth?.condition) }}
-                  >
-                    <span className="tooth-number">{number}</span>
-                    <span className="tooth-condition">
-                      {conditions.find(c => c.id === tooth?.condition)?.label || 'Sano'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Arcada inferior - Adulto */}
-          <div className="jaw-section">
-            <div className="jaw-label adult">Adulto - Arcada Inferior</div>
-            <div className="teeth-row lower">
-              {adultTeeth.lower.map(number => {
-                const tooth = dentalChart.find(t => t.number === number);
-                return (
-                  <div
-                    key={`adult-lower-${number}`}
-                    className={`tooth ${selectedTooth === number ? 'selected' : ''}`}
-                    onClick={() => handleToothClick(number)}
-                    style={{ backgroundColor: getToothColor(tooth?.condition) }}
-                  >
-                    <span className="tooth-number">{number}</span>
-                    <span className="tooth-condition">
-                      {conditions.find(c => c.id === tooth?.condition)?.label || 'Sano'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Diagrama infantil */}
-          <div className="child-diagram">
-            <h4>Diagrama Infantil (Dentición Temporal)</h4>
-            <div className="teeth-row upper">
-              {childTeeth.upper.map(number => (
-                <div key={`child-upper-${number}`} className="tooth child">
-                  <span className="tooth-number">{number}</span>
-                </div>
-              ))}
-            </div>
-            <div className="teeth-row lower">
-              {childTeeth.lower.map(number => (
-                <div key={`child-lower-${number}`} className="tooth child">
-                  <span className="tooth-number">{number}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Botón de aplicar */}
-          {selectedTooth && (
-            <div className="apply-section">
-              <p>Aplicar condición a diente {selectedTooth}:</p>
-              <div className="apply-actions">
-                <span className="selected-condition" style={{ backgroundColor: getToothColor(selectedCondition) }}>
-                  {conditions.find(c => c.id === selectedCondition)?.label}
-                </span>
-                <button className="btn-primary small" onClick={applyCondition}>
-                  Aplicar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="svg-container">
+        {/* Ancho 1000 para asegurar que el 28 y 38 no se corten */}
+        <svg viewBox="0 0 1000 320" className="odontograma-svg">
+          {connections.map((conn, i) => {
+            const start = getCoords(conn.start);
+            const end = getCoords(conn.end);
+            const x1 = start.x + CONSTANTS.TOOTH_SIZE / 2;
+            const x2 = end.x + CONSTANTS.TOOTH_SIZE / 2;
+            const yBase = start.y + (start.isUpper ? 0 : CONSTANTS.TOOTH_SIZE);
+            const yLine = yBase + (start.isUpper ? -35 : 35);
+            const colorHex = conn.color === 'red' ? CONSTANTS.COLORS.RED : CONSTANTS.COLORS.BLUE;
+            return (
+              <g key={i} onClick={() => setConnections(prev => prev.filter((_, idx) => idx !== i))}>
+                {conn.type === 'fixed' ? (
+                  <g stroke={colorHex} strokeWidth="3">
+                    <line x1={x1} y1={yLine} x2={x2} y2={yLine} />
+                    <line x1={x1} y1={yLine} x2={x1} y2={yBase} />
+                    <line x1={x2} y1={yLine} x2={x2} y2={yBase} />
+                  </g>
+                ) : (
+                  <path d={`M ${x1} ${yBase} L ${x1} ${yLine} L ${x2} ${yLine} L ${x2} ${yBase}`} stroke={colorHex} strokeWidth="2" fill="none" strokeDasharray="5,3" />
+                )}
+                <circle cx={(x1+x2)/2} cy={yLine} r="7" fill="#444" style={{cursor:'pointer'}} />
+                <text x={(x1+x2)/2} y={yLine+3} textAnchor="middle" fill="white" fontSize="9" pointerEvents="none">x</text>
+              </g>
+            );
+          })}
+          {teethUpper.map(id => <SingleTooth key={id} id={id} {...getCoords(id)} data={teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
+          <line x1="40" y1="150" x2="960" y2="150" stroke="#ddd" strokeWidth="1" />
+          {teethLower.map(id => <SingleTooth key={id} id={id} {...getCoords(id)} data={teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
+        </svg>
       </div>
 
-      {/* Observaciones y número de elementos */}
-      <div className="odontograma-notes">
-        <div className="notes-section">
-          <h4>Observaciones Odontológicas</h4>
-          <textarea
-            className="notes-textarea"
-            value={patientData.dentalObservations}
-            onChange={(e) => setPatientData({
-              ...patientData,
-              dentalObservations: e.target.value
-            })}
-            placeholder="Ingrese observaciones sobre el estado dental del paciente..."
-            rows="4"
-          />
-        </div>
-
-        <div className="elements-section">
-          <h4>Número de Elementos</h4>
-          <div className="elements-input">
-            <input
-              type="number"
-              min="1"
-              max="32"
-              value={patientData.elements}
-              onChange={(e) => setPatientData({
-                ...patientData,
-                elements: e.target.value
-              })}
-            />
-            <span className="elements-hint">(Máx. 32 dientes)</span>
-          </div>
-          <div className="elements-summary">
-            <p>Elementos presentes: <strong>{dentalChart.filter(t => t.condition !== 'absent').length}</strong></p>
-            <p>Elementos ausentes: <strong>{dentalChart.filter(t => t.condition === 'absent').length}</strong></p>
-          </div>
-        </div>
-      </div>
-
-      <div className="treatment-plan">
-        <h4>Plan de Tratamiento</h4>
-        <div className="plan-items">
-          {dentalChart
-            .filter(tooth => tooth.condition === 'caries' || tooth.condition === 'fracture')
-            .map(tooth => (
-              <div key={`plan-${tooth.number}`} className="plan-item">
-                <div className="plan-info">
-                  <span className="plan-tooth">Diente {tooth.number}</span>
-                  <span className="plan-treatment">
-                    {tooth.condition === 'caries' ? 'Tratamiento de caries' : 'Reparación de fractura'}
-                  </span>
-                </div>
-                <span className="plan-status pending">Pendiente</span>
-              </div>
-            ))}
-        </div>
-        <button className="btn-outline">
-          <Plus size={16} />
-          <span>Agregar Tratamiento</span>
-        </button>
-        <div className="notes-actions">
-          <button className="btn-primary">
-            <Save size={16} />
-            <span>Guardar Odontograma</span>
-          </button>
-        </div>
+      <div className="json-output">
+        <pre>{JSON.stringify({ teethState, connections }, null, 2)}</pre>
       </div>
     </div>
   );

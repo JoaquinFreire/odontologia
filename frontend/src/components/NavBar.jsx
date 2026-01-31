@@ -33,9 +33,7 @@ const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
 
   const onLogout = async () => {
     try {
-      console.log('NavBar: Iniciando logout');
       await handleLogout();
-      console.log('NavBar: Logout completado');
       navigate('/login', { replace: true });
     } catch (error) {
       console.error('NavBar: Error en logout:', error);
