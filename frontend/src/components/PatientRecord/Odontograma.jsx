@@ -110,11 +110,16 @@ const SingleTooth = ({ id, x, y, data, onInteraction, isSelected }) => {
 };
 
 // 3. COMPONENTE PRINCIPAL
-const Odontograma = () => {
-  const [teethState, setTeethState] = useState({});
-  const [connections, setConnections] = useState([]);
+const Odontograma = ({ onDataChange, initialData = { teethState: {}, connections: [] } }) => {
+  const [teethState, setTeethState] = useState(initialData.teethState || {});
+  const [connections, setConnections] = useState(initialData.connections || []);
   const [selectedTool, setSelectedTool] = useState('cursor');
   const [interactionStep, setInteractionStep] = useState(null);
+
+  // Actualizar datos del padre cuando cambie el estado
+  React.useEffect(() => {
+    onDataChange({ teethState, connections });
+  }, [teethState, connections, onDataChange]);
 
   const getCoords = (id) => {
     const isUpper = teethUpper.includes(id);

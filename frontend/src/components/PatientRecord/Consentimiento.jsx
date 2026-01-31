@@ -1,6 +1,6 @@
 // components/PatientRecord/Consentimiento.jsx
 import React, { useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const Consentimiento = ({ patientData, user, consentData, setConsentData }) => {
   // Actualizar datos del doctor cuando el componente monta o user cambia
@@ -98,6 +98,13 @@ const Consentimiento = ({ patientData, user, consentData, setConsentData }) => {
               </div>
             </label>
           </div>
+
+          {!consentData.accepted && (
+            <div className="consent-warning">
+              <AlertCircle size={20} color="#ff9800" />
+              <p>Advertencia: El consentimiento no ha sido aceptado. Puede continuar, pero se recomienda obtener la aceptación del paciente.</p>
+            </div>
+          )}
 
           {consentData.accepted && (
             <div className="consent-ready">

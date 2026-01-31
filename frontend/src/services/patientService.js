@@ -58,8 +58,8 @@ export const getPatient = async (patientId, userId) => {
   }
 };
 
-// Guardar paciente completo (paciente + anamnesis + consentimiento)
-export const saveCompletePatient = async (patientData, anamnesisData, consentData, userId) => {
+// Guardar paciente completo (paciente + anamnesis + consentimiento + odontograma)
+export const saveCompletePatient = async (patientData, anamnesisData, consentData, odontogramaData, userId) => {
   try {
     console.log('=== INICIANDO GUARDADO ===');
     
@@ -166,11 +166,27 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
     if (consentError) throw consentError;
     console.log('Consentimiento guardado');
 
+    // 4. Guardar odontograma
+    console.log('Guardando odontograma...');
+    const odontogramaPayload = {
+      patient_id: newPatientId,
+      formato: JSON.stringify(odontogramaData)
+    };
+
+    const { data: odontogramaDataSaved, error: odontogramaError } = await supabase
+      .from('odontograma')
+      .insert([odontogramaPayload])
+      .select();
+
+    if (odontogramaError) throw odontogramaError;
+    console.log('Odontograma guardado');
+
     return { 
       success: true, 
       patient: patientDataSaved[0],
       anamnesis: anamnesisDataSaved[0],
       consent: consentDataSaved[0],
+      odontograma: odontogramaDataSaved[0],
       message: `Paciente ${patientDataSaved[0].name} ${patientDataSaved[0].lastname} guardado exitosamente con su historia clínica`
     };
   } catch (error) {
