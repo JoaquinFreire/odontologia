@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { supabase } from '../config/supabaseClient';
 import { getStartOfTodayUTC, getEndOfTodayUTC } from '../utils/dateUtils';
 
@@ -8,18 +10,21 @@ export const appointmentService = {
       console.log('=== OBTENIENDO TURNOS DE HOY ===');
       console.log('User ID:', userId);
       
-      const startOfDay = getStartOfTodayUTC();
-      const endOfDay = getEndOfTodayUTC();
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      endOfDay.setMilliseconds(-1);
 
-      console.log('Fecha inicio:', startOfDay);
-      console.log('Fecha fin:', endOfDay);
+      console.log('Fecha inicio:', startOfDay.toISOString());
+      console.log('Fecha fin:', endOfDay.toISOString());
 
       const { data, error } = await supabase
         .from('shift')
         .select('*')
         .eq('user_id', userId)
-        .gte('datetime', startOfDay)
-        .lt('datetime', endOfDay)
+        .gte('datetime', startOfDay.toISOString())
+        .lt('datetime', endOfDay.toISOString())
         .eq('status', false)
         .order('datetime', { ascending: true });
 
@@ -40,15 +45,16 @@ export const appointmentService = {
       console.log('=== OBTENIENDO TURNOS ATRASADOS ===');
       console.log('User ID:', userId);
       
-      const startOfDay = getStartOfTodayUTC();
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-      console.log('Fecha límite:', startOfDay);
+      console.log('Fecha límite:', startOfDay.toISOString());
 
       const { data, error } = await supabase
         .from('shift')
         .select('*')
         .eq('user_id', userId)
-        .lt('datetime', startOfDay)
+        .lt('datetime', startOfDay.toISOString())
         .eq('status', false)
         .order('datetime', { ascending: false });
 
@@ -119,8 +125,7 @@ export const appointmentService = {
       console.log('Datos del turno:', appointmentData);
       console.log('User ID:', userId);
 
-      const dateTimeString = `${appointmentData.date}T${appointmentData.time}:00`;
-      const datetime = new Date(dateTimeString).toISOString();
+      const datetime = `${appointmentData.date} ${appointmentData.time}:00`;
 
       console.log('DateTime formateado:', datetime);
 
@@ -185,7 +190,8 @@ export const appointmentService = {
       console.log('=== OBTENIENDO TURNOS ===');
       console.log('User ID:', userId);
 
-      const startOfDay = getStartOfTodayUTC();
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
       // ✅ Solo traer turnos pendientes (status: false) a partir de hoy
       const { data, error } = await supabase
@@ -193,7 +199,7 @@ export const appointmentService = {
         .select('*')
         .eq('user_id', userId)
         .eq('status', false) // ← Solo pendientes
-        .gte('datetime', startOfDay) // ← Desde hoy en adelante
+        .gte('datetime', startOfDay.toISOString()) // ← Desde hoy en adelante
         .order('datetime', { ascending: true });
 
       console.log('Query error:', error);
@@ -244,8 +250,7 @@ export const appointmentService = {
 
       if (appointmentData.name) dataToUpdate.name = appointmentData.name;
       if (appointmentData.date && appointmentData.time) {
-        const dateTimeString = `${appointmentData.date}T${appointmentData.time}:00`;
-        dataToUpdate.datetime = new Date(dateTimeString).toISOString();
+        dataToUpdate.datetime = `${appointmentData.date} ${appointmentData.time}:00`;
       }
       if (appointmentData.dni !== undefined) dataToUpdate.dni = appointmentData.dni;
       if (appointmentData.type) dataToUpdate.type = appointmentData.type;

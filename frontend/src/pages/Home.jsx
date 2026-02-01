@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import '../App.css';
 import {
@@ -50,6 +51,7 @@ const Home = ({ user, handleLogout }) => {
     const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return new Date().toLocaleDateString('es-ES', opciones);
   };
+
 
   const loadAllAppointmentData = async () => {
     try {

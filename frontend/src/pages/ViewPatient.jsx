@@ -133,8 +133,117 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    ) : patients.length === 0 ? (
+                        <div className="no-results">
+                            <p style={{ fontSize: '18px', color: '#666' }}>
+                                No hay pacientes registrados
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="patients-table-container">
+                                <div className="table-wrapper">
+                                    <table className="patients-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre y Apellido</th>
+                                                <th>DNI</th>
+                                                <th>Edad</th>
+                                                <th>Ocupación</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {tablePatients.length > 0 ? (
+                                                tablePatients.map(patient => (
+                                                    <tr key={patient.id}>
+                                                        <td>
+                                                            <div className="patient-info">
+                                                                <div className="patient-avatar">
+                                                                    <UserIcon />
+                                                                </div>
+                                                                <div className="patient-details">
+                                                                    <p className="patient-name">{patient.fullName}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="dni-text">{patient.dni}</td>
+                                                        <td>{patient.age ? `${patient.age} años` : 'N/A'}</td>
+                                                        <td>{patient.occupation || '-'}</td>
+                                                        <td>
+                                                            <div className="action-buttons">
+                                                                <button
+                                                                    className="action-btn details-btn"
+                                                                    title="Ver detalles"
+                                                                    onClick={() => openPatientDetails(patient)}
+                                                                >
+                                                                    👁️
+                                                                </button>
+                                                                <button
+                                                                    className="action-btn history-btn"
+                                                                    title="Historial clínico"
+                                                                    onClick={() => openMedicalHistory(patient)}
+                                                                >
+                                                                    📋
+                                                                </button>
+                                                                <button
+                                                                    className="action-btn appointment-btn"
+                                                                    title="Agendar turno"
+                                                                    onClick={() => openAppointmentModal(patient)}
+                                                                >
+                                                                    📅
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                                                        No se encontraron pacientes con esa búsqueda
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
 
+                            {/* Paginación */}
+                            {totalPages > 1 && (
+                                <div className="pagination-container">
+                                    <div className="pagination-info">
+                                        Página {currentPage} de {totalPages} • Total: {totalPatients} pacientes
+                                    </div>
+                                    <div className="pagination-buttons">
+                                        <button
+                                            className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                                            onClick={() => paginate(currentPage - 1)}
+                                            disabled={currentPage === 1}
+                                        >
+                                            ←
+                                        </button>
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                            <button
+                                                key={page}
+                                                className={`page-number ${currentPage === page ? 'active' : ''}`}
+                                                onClick={() => paginate(page)}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+                                        <button
+                                            className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                                            onClick={() => paginate(currentPage + 1)}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                             →
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
                     {/* MODAL COBROS */}
                     {showPaymentModal && selectedPatient && (
                         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
