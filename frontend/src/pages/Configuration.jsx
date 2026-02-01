@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import '../App.css';
-import { Settings, Save } from 'lucide-react';
+import { Settings, Save, User as UserIcon, Mail, CreditCard } from 'lucide-react';
 import NavBar from '../components/NavBar';
 import { supabase } from '../config/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import '../styles/Configuration.css'; // Asegúrate de importar el CSS
 
 const Configuration = ({ setIsAuthenticated, user, setUser }) => {
   const [formData, setFormData] = useState({
@@ -12,11 +12,12 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
     lastname: '',
     tuition: ''
   });
-  const [loading, setLoading] = useState(false);  
+  const [loading, setLoading] = useState(false);
   const [originalData, setOriginalData] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [activeNav, setActiveNav] = useState('dashboard');
+  const [activeNav, setActiveNav] = useState('configuration');
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadUserData();
@@ -24,10 +25,7 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
 
   const loadUserData = async () => {
     try {
-      if (!user?.email) {
-        console.error('No user email available');
-        return;
-      }
+      if (!user?.email) return;
 
       const { data, error } = await supabase
         .from('user')
@@ -35,34 +33,24 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
         .eq('email', user.email)
         .single();
 
-      console.log('Query error:', error);
-      console.log('User data:', data);
-
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       if (data) {
-        setFormData({
+        const userData = {
           email: data.email || '',
           name: data.name || '',
           lastname: data.lastname || '',
           tuition: data.tuition || ''
-        });
-        setOriginalData({
-          email: data.email || '',
-          name: data.name || '',
-          lastname: data.lastname || '',
-          tuition: data.tuition || ''
-        });
+        };
+        setFormData(userData);
+        setOriginalData(userData);
       }
     } catch (error) {
-      console.error('Error cargando datos del usuario:', error);
       setMessage('Error al cargar los datos');
       setMessageType('error');
     }
   };
-  const navigate = useNavigate();
+
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUser(null);
@@ -71,10 +59,11 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const hasChanges = () => {
+    return JSON.stringify(formData) !== JSON.stringify(originalData);
   };
 
   const handleSubmit = async (e) => {
@@ -83,52 +72,28 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
     setMessage('');
 
     try {
-      // Preparar datos a actualizar
       const dataToUpdate = {
         email: formData.email,
         tuition: formData.tuition
       };
 
-      console.log('Actualizando con:', dataToUpdate);
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('user')
         .update(dataToUpdate)
-        .eq('email', originalData.email)
-        .select();
+        .eq('email', originalData.email);
 
-      console.log('Update error:', error);
-      console.log('Updated data:', data);
+      if (error) throw new Error(error.message);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      console.log('=== ACTUALIZACIÓN EXITOSA ===');
-
-      // Actualizar datos originales
       setOriginalData(formData);
-
-      // Actualizar el estado global del usuario
-      setUser(prev => ({
-        ...prev,
-        email: formData.email,
-        tuition: formData.tuition
-      }));
-
+      setUser(prev => ({ ...prev, ...dataToUpdate }));
       setMessage('✓ Datos actualizados exitosamente');
       setMessageType('success');
     } catch (error) {
-      console.error('Error actualizando datos:', error);
       setMessage(`✗ Error: ${error.message}`);
       setMessageType('error');
     } finally {
       setLoading(false);
     }
-  };
-
-  const hasChanges = () => {
-    return JSON.stringify(formData) !== JSON.stringify(originalData);
   };
 
   return (
@@ -141,130 +106,90 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
       />
 
       <main className="main-content">
-        <div style={{ padding: '20px' }}>
-          <div className="content-header">
-            <h1>Configuración</h1>
-          </div>
+        <div className="config-container">
+          <header className="config-card-header">
+            <Settings size={28} />
+            <h3>Configuración de Perfil</h3>
+          </header>
 
-          <div style={{
-            backgroundColor: '#f5f5f5',
-            padding: '20px',
-            borderRadius: '8px',
-            maxWidth: '600px'
-          }}>
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center' }}>
-                <Settings size={24} style={{ marginRight: '10px' }} />
-                Configuración de Perfil
-              </h3>
-            </div>
-
+          <div className="config-form-body">
             {message && (
-              <div style={{
-                backgroundColor: messageType === 'success' ? '#e8f5e9' : '#ffebee',
-                border: `1px solid ${messageType === 'success' ? '#4caf50' : '#f44336'}`,
-                color: messageType === 'success' ? '#2e7d32' : '#c62828',
-                padding: '12px',
-                borderRadius: '4px',
-                marginBottom: '15px'
-              }}>
+              <div className={`status-message ${messageType}`}>
                 {message}
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="form-grid">
               {/* Nombre - Solo lectura */}
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ fontWeight: 'bold' }}>Nombre:</label>
+              <div className="form-group">
+                <label><UserIcon size={14} /> Nombre</label>
                 <input
                   type="text"
                   value={formData.name}
                   readOnly
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    marginTop: '5px',
-                    boxSizing: 'border-box',
-                    backgroundColor: '#e8e8e8',
-                    cursor: 'not-allowed'
-                  }}
+                  className="readonly"
                 />
-                <small style={{ color: '#999' }}>Este campo no puede modificarse</small>
+                <small>Campo no modificable</small>
               </div>
 
               {/* Apellido - Solo lectura */}
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ fontWeight: 'bold' }}>Apellido:</label>
+              <div className="form-group">
+                <label><UserIcon size={14} /> Apellido</label>
                 <input
                   type="text"
                   value={formData.lastname}
                   readOnly
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    marginTop: '5px',
-                    boxSizing: 'border-box',
-                    backgroundColor: '#e8e8e8',
-                    cursor: 'not-allowed'
-                  }}
+                  className="readonly"
                 />
-                <small style={{ color: '#999' }}>Este campo no puede modificarse</small>
+                <small>Campo no modificable</small>
               </div>
 
               {/* Email - Editable */}
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ fontWeight: 'bold' }}>Email:</label>
+              <div className="form-group full-width">
+                <label><Mail size={14} /> Correo Electrónico</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    marginTop: '5px',
-                    boxSizing: 'border-box',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
+                  placeholder="ejemplo@correo.com"
                 />
               </div>
 
               {/* Matrícula - Editable */}
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ fontWeight: 'bold' }}>Matrícula:</label>
+              <div className="form-group full-width">
+                <label><CreditCard size={14} /> Matrícula Profesional</label>
                 <input
                   type="text"
                   name="tuition"
                   value={formData.tuition}
                   onChange={handleChange}
                   placeholder="Ingrese su número de matrícula"
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    marginTop: '5px',
-                    boxSizing: 'border-box',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
                 />
               </div>
 
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ marginTop: '20px' }}
-                disabled={loading || !hasChanges()}
-              >
-                <Save size={18} style={{ marginRight: '8px', display: 'inline' }} />
-                {loading ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-
-              {!hasChanges() && (
-                <p style={{ color: '#999', fontSize: '14px', marginTop: '10px' }}>
-                  No hay cambios por guardar
-                </p>
-              )}
+              <div className="full-width">
+                <button
+                  type="submit"
+                  className="btn-save-config"
+                  disabled={loading || !hasChanges()}
+                >
+                  {loading ? (
+                    'Guardando...'
+                  ) : (
+                    <>
+                      <Save size={20} />
+                      Guardar Cambios
+                    </>
+                  )}
+                </button>
+                
+                {!hasChanges() && !loading && (
+                  <p style={{ textAlign: 'center', color: '#adb5bd', fontSize: '0.85rem', marginTop: '12px' }}>
+                    No se han detectado cambios en el perfil
+                  </p>
+                )}
+              </div>
             </form>
           </div>
         </div>
