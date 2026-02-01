@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, X, Edit2, Trash2, PlusCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2, Clock, User, Briefcase } from 'lucide-react';
 import { appointmentService } from '../services/appointmentService';
 import { getAppointmentDateLocal, getAppointmentTimeLocal } from '../utils/dateUtils';
 import '../styles/calendar.css';
@@ -7,337 +7,221 @@ import '../styles/calendar.css';
 const Calendar = ({ userId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
-  const [overdueAppointments, setOverdueAppointments] = useState([]);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   
   const [formData, setFormData] = useState({
-    name: '',
-    date: '',
-    time: '',
-    dni: '',
-    type: '', 
+    name: '', date: '', time: '', dni: '', type: ''
   });
-  
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+
+  const timeSlots = (() => {
+    const slots = [];
+    for (let h = 8; h <= 21; h++) {
+      const hh = String(h).padStart(2, '0');
+      slots.push(`${hh}:00`, `${hh}:30`);
+    }
+    slots.push("22:00");
+    return slots;
+  })();
 
   useEffect(() => {
-    loadAppointments();
+    if (userId) loadAppointments();
   }, [currentDate, userId]);
 
   const loadAppointments = async () => {
-    if (!userId) return;
     setLoading(true);
     try {
-      const futureData = await appointmentService.getAppointments(userId);
-      const overdueData = await appointmentService.getOverdueAppointments(userId);
-      setAppointments([...overdueData, ...futureData]);
-      setOverdueAppointments(overdueData);
-      setError('');
+      const data = await appointmentService.getAppointments(userId);
+      const overdue = await appointmentService.getOverdueAppointments(userId);
+      setAppointments([...data, ...overdue]);
     } catch (err) {
-      setError('Error al cargar los turnos');
+      console.error("Error al cargar turnos:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-
-  const getAppointmentsForDate = (day) => {
-    const year = currentDate.getFullYear();
-    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-    const dayStr = String(day).padStart(2, '0');
-    const dateStr = `${year}-${month}-${dayStr}`;
-    return appointments.filter((apt) => getAppointmentDateLocal(apt.datetime) === dateStr);
+  // Lógica para obtener los 7 días de la semana (Lunes a Domingo)
+  const getWeekDays = () => {
+    const d = new Date(currentDate);
+    const day = d.getDay();
+    // Ajuste para que el Lunes sea el inicio (si es Domingo(0), retrocede 6 días)
+    const diff = d.getDate() - (day === 0 ? 6 : day - 1);
+    const startOfWeek = new Date(d.setDate(diff));
+    
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      return date;
+    });
   };
 
-  const getAppointmentClass = (appointment) => {
-    const aptDateLocal = getAppointmentDateLocal(appointment.datetime);
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const getAptAtSlot = (date, slot) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
 
-    if (overdueAppointments.some(oap => oap.id === appointment.id)) return 'overdue';
-    if (aptDateLocal === todayStr) return 'today';
-    return 'future';
+    return appointments.find(apt => 
+      getAppointmentDateLocal(apt.datetime) === dateStr && 
+      getAppointmentTimeLocal(apt.datetime) === slot
+    );
   };
 
-  const goToPreviousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-  const goToNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-  const goToToday = () => setCurrentDate(new Date());
-
-  const openEditModal = (appointment = null) => {
-    if (appointment) {
-      setFormData({
-        name: appointment.name,
-        date: getAppointmentDateLocal(appointment.datetime),
-        time: getAppointmentTimeLocal(appointment.datetime),
-        dni: appointment.dni || '',
-        type: appointment.type,
-      });
-      setSelectedAppointment(appointment);
+  const handleSlotClick = (day, slot, apt) => {
+    if (apt) {
+      setSelectedAppointment(apt);
       setIsEditMode(true);
+      setFormData({
+        name: apt.name,
+        date: getAppointmentDateLocal(apt.datetime),
+        time: getAppointmentTimeLocal(apt.datetime),
+        dni: apt.dni || '',
+        type: apt.type
+      });
     } else {
+      const y = day.getFullYear();
+      const m = String(day.getMonth() + 1).padStart(2, '0');
+      const d = String(day.getDate()).padStart(2, '0');
+      setFormData({ name: '', date: `${y}-${m}-${d}`, time: slot, dni: '', type: '' });
       setIsEditMode(false);
+      setSelectedAppointment(null);
     }
     setIsModalOpen(true);
-    setError('');
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedAppointment(null);
-    setError('');
-    setSuccessMessage('');
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSaveAppointment = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.date || !formData.time || !formData.type) {
-      setError('Por favor completa todos los campos obligatorios');
-      return;
-    }
-
+    setLoading(true);
     try {
-      setLoading(true);
-      if (isEditMode && selectedAppointment) {
-        // SOLUCIÓN AL ERROR DE SHIFT: Se agrega userId
+      if (isEditMode) {
         await appointmentService.updateAppointment(selectedAppointment.id, formData, userId);
       } else {
-        // SOLUCIÓN AL ERROR DE SHIFT: Se agrega userId
         await appointmentService.createAppointment(formData, userId);
       }
       await loadAppointments();
-      closeModal();
+      setIsModalOpen(false);
     } catch (err) {
-      setError(err.message || 'Error al guardar');
+      alert("Error al guardar: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteAppointment = async () => {
-    if (!selectedAppointment || !window.confirm(`¿Eliminar turno?`)) return;
-    try {
+  const handleDelete = async () => {
+    if (!selectedAppointment) return;
+    if (window.confirm(`¿Eliminar el turno de ${selectedAppointment.name}?`)) {
       setLoading(true);
-      await appointmentService.deleteAppointment(selectedAppointment.id);
-      await loadAppointments();
-      closeModal();
-    } catch (err) {
-      setError('Error al eliminar');
-    } finally {
-      setLoading(false);
+      try {
+        await appointmentService.deleteAppointment(selectedAppointment.id, userId);
+        await loadAppointments();
+        setIsModalOpen(false);
+      } catch (err) {
+        alert("Error al eliminar: " + err.message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
-
-  const daysInMonth = getDaysInMonth(currentDate);
-  const firstDay = getFirstDayOfMonth(currentDate);
-  const days = [];
-  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-  for (let i = 0; i < firstDay; i++) days.push(null);
-  for (let i = 1; i <= daysInMonth; i++) days.push(i);
 
   return (
-    <div className="calendar-container">
-      <div className="calendar-header">
-        <div className="calendar-nav">
-          <button onClick={goToPreviousMonth} className="btn-nav"><ChevronLeft size={20} /></button>
-          <h2 className="calendar-title">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
-          <button onClick={goToNextMonth} className="btn-nav"><ChevronRight size={20} /></button>
+    <div className="planner-container">
+      <div className="planner-header">
+        <div>
+          <h1 className="month-name">{currentDate.toLocaleString('es-ES', { month: 'long' }).toUpperCase()}</h1>
+          <span className="year-label">{currentDate.getFullYear()}</span>
         </div>
-        <button onClick={goToToday} className="btn-today">Hoy</button>
+        <div className="nav-controls">
+          <button onClick={() => setCurrentDate(new Date())} className="btn-today-planner">Hoy</button>
+          <button onClick={() => {
+            const d = new Date(currentDate); d.setDate(d.getDate() - 7); setCurrentDate(new Date(d));
+          }} className="btn-icon"><ChevronLeft /></button>
+          <button onClick={() => {
+            const d = new Date(currentDate); d.setDate(d.getDate() + 7); setCurrentDate(new Date(d));
+          }} className="btn-icon"><ChevronRight /></button>
+        </div>
       </div>
 
-      <div className="calendar-weekdays">
-        {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((d, index) => {
-          const today = new Date();
-          const isToday = index === today.getDay();
+      <div className="planner-grid">
+        {getWeekDays().map((day, idx) => {
+          const isToday = day.toDateString() === new Date().toDateString();
           return (
-            <div key={d} className={`weekday ${isToday ? 'today' : ''}`}>{d}</div>
-          );
-        })}
-      </div>
-
-      <div className="calendar-grid">
-        {days.map((day, index) => {
-          const dayAppointments = day ? getAppointmentsForDate(day) : [];
-          const cellDate = day ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day) : null;
-          const todayAtMidnight = new Date().setHours(0, 0, 0, 0);
-          const isPast = cellDate && cellDate.getTime() < todayAtMidnight;
-
-          return (
-            <div key={index} className={`calendar-day ${day ? 'active' : 'empty'} ${cellDate?.getTime() === todayAtMidnight ? 'today' : ''} ${isPast ? 'is-past' : ''}`}>
-              {day && (
-                <>
-                  <div className="day-number">{day}</div>
-                  <div className="appointments-list">
-                    {dayAppointments.map((apt) => (
-                      <div key={apt.id} className={`appointment-item ${getAppointmentClass(apt)}`} onClick={() => {
-                        setSelectedAppointment(apt);
-                        setIsModalOpen(true);
-                        setIsEditMode(false);
-                      }}>
-                        <div className="apt-time">{getAppointmentTimeLocal(apt.datetime)}</div>
-                        <div className="apt-name">{apt.name}</div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {!isPast && (
-                    <button
-                      className="btn-add-appointment"
-                      onClick={() => {
-                        const year = currentDate.getFullYear();
-                        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                        const dayStr = String(day).padStart(2, '0');
-                        const formattedDate = `${year}-${month}-${dayStr}`;
-                        
-                        setFormData({
-                          name: '',
-                          date: formattedDate,
-                          time: '09:00',
-                          dni: '',
-                          type: '',
-                        });
-                        openEditModal();
-                      }}
+            <div key={idx} className={`planner-column ${isToday ? 'current-day-col' : ''}`}>
+              <div className="column-header">
+                <span className="day-name">{day.toLocaleString('es-ES', { weekday: 'short' })}</span>
+                <span className="day-number">{day.getDate()}</span>
+                
+              </div>
+              <div className="slots-container">
+                {timeSlots.map(slot => {
+                  const apt = getAptAtSlot(day, slot);
+                  return (
+                    <div 
+                      key={slot} 
+                      className="time-slot"
+                      onClick={() => handleSlotClick(day, slot, apt)}
                     >
-                      +
-                    </button>
-                  )}
-                </>
-              )}
+                      <span className="slot-time">{slot}</span>
+                      {apt && <div className="apt-badge">{apt.name}</div>}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })}
       </div>
 
       {isModalOpen && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>
-                {isEditMode ? 'Editar Turno' : selectedAppointment ? 'Detalles del Turno' : 'Agendar Nuevo Turno'}
-              </h2>
-              <button className="modal-close" onClick={closeModal}>
-                <span>&times;</span>
-              </button>
+              <h2>{isEditMode ? 'Editar Turno' : 'Nuevo Turno'}</h2>
             </div>
-
-            {error && <div className="error-message">{error}</div>}
-
-            {selectedAppointment && !isEditMode ? (
-              <div className="appointment-details">
-                <div className="detail-row"><span className="label">Paciente:</span><span className="value">{selectedAppointment.name}</span></div>
-                <div className="detail-row"><span className="label">DNI:</span><span className="value">{selectedAppointment.dni || 'No especificado'}</span></div>
-                <div className="detail-row"><span className="label">Tratamiento:</span><span className="value">{selectedAppointment.type}</span></div>
-                <div className="detail-row"><span className="label">Fecha:</span><span className="value">{new Date(selectedAppointment.datetime).toLocaleDateString()} {getAppointmentTimeLocal(selectedAppointment.datetime)}</span></div>
-                
-                <div className="modal-actions">
-                   <button type="button" className="btn-outline" onClick={closeModal}>Cerrar</button>
-                   <button type="button" className="btn-primary" onClick={() => openEditModal(selectedAppointment)}>Editar</button>
-                   <button type="button" className="btn-danger" onClick={handleDeleteAppointment} style={{ marginLeft: 'auto' }}>Eliminar</button>
-                </div>
+            <form onSubmit={handleSave} className="appointment-form">
+              <div className="form-group">
+                <label><User size={14}/> Paciente</label>
+                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Nombre completo" />
               </div>
-            ) : (
-              <form className="appointment-form" onSubmit={handleSaveAppointment}>
+              <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="name">Nombre completo *</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleFormChange}
-                    placeholder="Ej: María González"
-                    required
-                    disabled={loading}
-                  />
+                  <label>Fecha</label>
+                  <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required />
                 </div>
-
                 <div className="form-group">
-                  <label htmlFor="dni">DNI (Opcional)</label>
-                  <input
-                    type="number"
-                    id="dni"
-                    name="dni"
-                    value={formData.dni}
-                    onChange={handleFormChange}
-                    placeholder="Ej: 12345678"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="date">Fecha *</label>
-                  <input
-                    type="date"
-                    id="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleFormChange}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="time">Hora *</label>
-                  <input
-                    type="time"
-                    id="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={handleFormChange}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="type">Tipo de Tratamiento *</label>
-                  <select
-                    id="type"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleFormChange}
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Seleccionar tratamiento...</option>
-                    <option value="Consulta">Consulta</option>
-                    <option value="Limpieza dental">Limpieza dental</option>
-                    <option value="Extracción">Extracción</option>
-                    <option value="Blanqueamiento">Blanqueamiento</option>
-                    <option value="Ortodoncia">Ortodoncia</option>
-                    <option value="Implante dental">Implante dental</option>
-                    <option value="Otro">Otro</option>
+                  <label><Clock size={14}/> Hora</label>
+                  <select value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} required>
+                    {timeSlots.map(t => <option key={t} value={t}>{t} hs</option>)}
                   </select>
                 </div>
+              </div>
+              <div className="form-group">
+                <label><Briefcase size={14}/> Tratamiento</label>
+                <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} required>
+                  <option value="">Seleccionar...</option>
+                  <option value="Consulta">Consulta</option>
+                  <option value="Limpieza dental">Limpieza dental</option>
+                  <option value="Extracción">Extracción</option>
+                  <option value="Ortodoncia">Ortodoncia</option>
+                </select>
+              </div>
 
-                <div className="modal-actions">
-                  <button type="button" className="btn-outline" onClick={closeModal} disabled={loading}>
-                    Cancelar
+              <div className="modal-actions-container">
+                {isEditMode && (
+                  <button type="button" className="btn-delete-planner" onClick={handleDelete} disabled={loading}>
+                    <Trash2 size={16} /> <span>Eliminar</span>
                   </button>
-                  <button type="submit" className="btn-primary" disabled={loading}>
-                    {loading ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Agendar Turno')}
+                )}
+                <div className="main-actions">
+                  <button type="button" className="btn-outline-planner" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                  <button type="submit" className="btn-confirm-planner" disabled={loading}>
+                    {loading ? 'Guardando...' : 'Confirmar'}
                   </button>
                 </div>
-              </form>
-            )}
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -346,8 +230,6 @@ const Calendar = ({ userId }) => {
 };
 
 export default Calendar;
-
-
 // import React, { useState, useEffect } from 'react';
 // import { ChevronLeft, ChevronRight, X, Edit2, Trash2 } from 'lucide-react';
 // import { appointmentService } from '../services/appointmentService';
