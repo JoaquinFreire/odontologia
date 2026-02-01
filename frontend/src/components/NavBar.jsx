@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Users, FileText, Settings, UserPlus, Home, Menu, X } from 'lucide-react';
 import { User } from 'lucide-react';
 
-const NavBar = ({ activeNav, setActiveNav, user, handleLogout }) => {
+const NavBar = ({ activeNav, setActiveNav = () => {}, user, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
