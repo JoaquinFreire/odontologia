@@ -421,3 +421,161 @@
   color: #777;
   text-align: center;
 }
+
+/* Campos adicionales del odontograma */
+.odontograma-fields {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  flex-direction: row-reverse;
+  margin-top: 20px;
+  width: 87%;
+}
+@media (max-width: 1000px) {
+  .odontograma-fields {
+    flex-direction: column-reverse;
+  }
+}
+.field-group {
+  flex: 1;
+  min-width: 300px;
+}
+
+.field-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.field-group input,
+.field-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.field-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* JSON Outputs */
+.json-outputs-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.json-box {
+  flex: 1;
+  min-width: 200px;
+  background: #282c34;
+  color: #abb2bf;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 11px;
+  overflow: auto;
+  max-height: 300px;
+}
+
+.json-box h5 {
+  margin: 0 0 10px 0;
+  color: #61dafb;
+  font-size: 13px;
+}
+
+/* Treatments Section */
+.treatments-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.treatments-section h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.treatment-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background: #f9f9f9;
+}
+
+.treatment-fields {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.treatment-fields .field-group {
+  flex: 1;
+  min-width: 120px;
+}
+
+.treatment-fields .field-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+}
+
+.treatment-fields .field-group input,
+.treatment-fields .field-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.treatment-fields .field-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.remove-treatment-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.remove-treatment-btn:hover {
+  background: #d32f2f;
+}
+
+.add-treatment-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.add-treatment-btn:hover {
+  background: #45a049;
+}
