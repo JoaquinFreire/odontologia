@@ -144,7 +144,11 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
       .insert([anamnesisPayload])
       .select();
 
-    if (anamnesisError) throw anamnesisError;
+    if (anamnesisError) {
+      // Eliminar paciente si falla anamnesis
+      await supabase.from('patient').delete().eq('id', newPatientId);
+      throw anamnesisError;
+    }
     console.log('Anamnesis guardada');
 
     // 3. Guardar consentimiento CON datos completos
@@ -163,7 +167,12 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
       .insert([consentPayload])
       .select();
 
-    if (consentError) throw consentError;
+    if (consentError) {
+      // Eliminar paciente y anamnesis si falla consentimiento
+      await supabase.from('patient').delete().eq('id', newPatientId);
+      await supabase.from('anamnesis_answers').delete().eq('patient_id', newPatientId);
+      throw consentError;
+    }
     console.log('Consentimiento guardado');
 
     // 4. Guardar odontograma
@@ -171,7 +180,10 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
     const odontogramaPayload = {
       patient_id: newPatientId,
       formato: JSON.stringify(odontogramaData.adult),
-      formato_nino: odontogramaData.child.teethState && Object.keys(odontogramaData.child.teethState).length > 0 || odontogramaData.child.connections.length > 0 ? JSON.stringify(odontogramaData.child) : null
+      formato_nino: odontogramaData.child.teethState && Object.keys(odontogramaData.child.teethState).length > 0 || odontogramaData.child.connections.length > 0 ? JSON.stringify(odontogramaData.child) : null,
+      observaciones: odontogramaData.observaciones || null,
+      elementos_dentarios: odontogramaData.elementos_dentarios || null,
+      version: odontogramaData.version || 1
     };
 
     const { data: odontogramaDataSaved, error: odontogramaError } = await supabase
@@ -179,8 +191,46 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
       .insert([odontogramaPayload])
       .select();
 
-    if (odontogramaError) throw odontogramaError;
+    if (odontogramaError) {
+      // Eliminar paciente y anamnesis si falla odontograma
+      await supabase.from('patient').delete().eq('id', newPatientId);
+      await supabase.from('anamnesis_answers').delete().eq('patient_id', newPatientId);
+      await supabase.from('consent').delete().eq('patient_id', newPatientId);
+      throw odontogramaError;
+    }
     console.log('Odontograma guardado');
+
+    // 5. Guardar tratamientos
+    let treatmentsDataSaved = [];
+    if (odontogramaData.treatments && odontogramaData.treatments.length > 0) {
+      console.log('Guardando tratamientos...');
+      for (const treatment of odontogramaData.treatments) {
+        const treatmentPayload = {
+          patient_id: newPatientId,
+          date: treatment.date || null,
+          code: treatment.code || null,
+          tooth_elements: treatment.tooth_elements || null,
+          faces: treatment.faces || null,
+          observations: treatment.observations || null
+        };
+
+        const { data, error } = await supabase
+          .from('treatments')
+          .insert([treatmentPayload])
+          .select();
+
+        if (error) {
+          // Si hay error, eliminar todo lo guardado
+          await supabase.from('patient').delete().eq('id', newPatientId);
+          await supabase.from('anamnesis_answers').delete().eq('patient_id', newPatientId);
+          await supabase.from('consent').delete().eq('patient_id', newPatientId);
+          await supabase.from('odontograma').delete().eq('patient_id', newPatientId);
+          throw error;
+        }
+        treatmentsDataSaved.push(data[0]);
+      }
+      console.log('Tratamientos guardados');
+    }
 
     return { 
       success: true, 
@@ -188,6 +238,7 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
       anamnesis: anamnesisDataSaved[0],
       consent: consentDataSaved[0],
       odontograma: odontogramaDataSaved[0],
+      treatments: treatmentsDataSaved || [],
       message: `Paciente ${patientDataSaved[0].name} ${patientDataSaved[0].lastname} guardado exitosamente con su historia clínica`
     };
   } catch (error) {

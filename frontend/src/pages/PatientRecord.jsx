@@ -116,7 +116,11 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
 
   const [odontogramaData, setOdontogramaData] = useState({
     adult: { teethState: {}, connections: [] },
-    child: { teethState: {}, connections: [] }
+    child: { teethState: {}, connections: [] },
+    observaciones: '',
+    elementos_dentarios: '',
+    version: 1,
+    treatments: []
   });
 
   const tabs = [

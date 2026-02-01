@@ -76,7 +76,11 @@ const Odontograma = ({ initialData, onDataChange }) => {
   const [view, setView] = useState('adult'); 
   const [data, setData] = useState(initialData || {
     adult: { teethState: {}, connections: [] },
-    child: { teethState: {}, connections: [] }
+    child: { teethState: {}, connections: [] },
+    observaciones: '',
+    elementos_dentarios: '',
+    version: 1,
+    treatments: []
   });
   const [selectedTool, setSelectedTool] = useState('cursor');
   const [interactionStep, setInteractionStep] = useState(null);
@@ -91,12 +95,14 @@ const Odontograma = ({ initialData, onDataChange }) => {
     }
   }, [initialData]);
 
-  // Notify parent when data changes
-  useEffect(() => {
+  const updateData = (newData) => {
+    setData(newData);
     if (onDataChange) {
-      onDataChange(data);
+      onDataChange(newData);
     }
-  }, [data, onDataChange]);
+  };
+
+  // Notify parent when data changes - removed to avoid infinite loop
 
   const currentTeethUpper = view === 'adult' ? ADULTO_UPPER : NINO_UPPER;
   const currentTeethLower = view === 'adult' ? ADULTO_LOWER : NINO_LOWER;
@@ -123,7 +129,7 @@ const Odontograma = ({ initialData, onDataChange }) => {
       const color = selectedTool.split('_')[1];
       const tooth = viewData.teethState[id] || { faces: {}, attributes: {} };
       const newFaces = { ...tooth.faces, [face]: tooth.faces[face] === color ? null : color };
-      setData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, faces: newFaces } } } });
+      updateData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, faces: newFaces } } } });
       return;
     }
 
@@ -134,7 +140,7 @@ const Odontograma = ({ initialData, onDataChange }) => {
       const attrKey = attrMap[toolPrefix];
       const tooth = viewData.teethState[id] || { faces: {}, attributes: {} };
       const newVal = tooth.attributes[attrKey] === color ? null : color;
-      setData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, attributes: { ...tooth.attributes, [attrKey]: newVal } } } } });
+      updateData({ ...data, [view]: { ...viewData, teethState: { ...viewData.teethState, [id]: { ...tooth, attributes: { ...tooth.attributes, [attrKey]: newVal } } } } });
       return;
     }
 
@@ -144,7 +150,7 @@ const Odontograma = ({ initialData, onDataChange }) => {
       } else if (interactionStep.startId !== id) {
         const parts = selectedTool.split('_');
         const newConn = { start: interactionStep.startId, end: id, type: parts[1], color: parts[2] };
-        setData({ ...data, [view]: { ...viewData, connections: [...viewData.connections, newConn] } });
+        updateData({ ...data, [view]: { ...viewData, connections: [...viewData.connections, newConn] } });
         setInteractionStep(null);
       }
     }
@@ -182,7 +188,7 @@ const Odontograma = ({ initialData, onDataChange }) => {
               return (
                 <g key={i} onClick={() => {
                   const newConns = data[view].connections.filter((_, idx) => idx !== i);
-                  setData({...data, [view]: {...data[view], connections: newConns}});
+                  updateData({...data, [view]: {...data[view], connections: newConns}});
                 }} style={{cursor:'pointer'}}>
                   <rect x={xMin} y={yMin} width={xMax - xMin} height={CONSTANTS.TOOTH_RADIUS * 2 + 4} fill="none" stroke={color} strokeWidth="3" rx="4" />
                   <circle cx={(xMin + xMax)/2} cy={yMin} r="8" fill="#444" /><text x={(xMin + xMax)/2} y={yMin + 4} textAnchor="middle" fill="white" fontSize="10">x</text>
@@ -195,7 +201,7 @@ const Odontograma = ({ initialData, onDataChange }) => {
               return (
                 <g key={i} onClick={() => {
                    const newConns = data[view].connections.filter((_, idx) => idx !== i);
-                   setData({...data, [view]: {...data[view], connections: newConns}});
+                   updateData({...data, [view]: {...data[view], connections: newConns}});
                 }} style={{cursor:'pointer'}}>
                   <path d={`M ${x1} ${yBase} L ${x1} ${yLine} L ${x2} ${yLine} L ${x2} ${yBase}`} stroke={color} strokeWidth="3" fill="none" />
                   <circle cx={(x1+x2)/2} cy={yLine} r="8" fill="#444" /><text x={(x1+x2)/2} y={yLine+4} textAnchor="middle" fill="white" fontSize="10">x</text>
@@ -208,6 +214,123 @@ const Odontograma = ({ initialData, onDataChange }) => {
           <line x1="40" y1="175" x2="960" y2="175" stroke="#eee" strokeWidth="2" />
           {currentTeethLower.map(id => <SingleTooth key={id} id={id} {...getCoords(id, view)} data={data[view].teethState[id] || {}} isSelected={interactionStep?.startId === id} onInteraction={handleToothInteraction} />)}
         </svg>
+      </div>
+
+      <div className="odontograma-fields">
+        <div className="field-group">
+          <label htmlFor="elementos_dentarios">Elementos Dentarios:</label>
+          <input
+            id="elementos_dentarios"
+            type="text"
+            value={data.elementos_dentarios || ''}
+            onChange={(e) => updateData({...data, elementos_dentarios: e.target.value})}
+            placeholder="Ej: 32"
+          />
+        </div>
+        <div className="field-group">
+          <label htmlFor="observaciones">Observaciones:</label>
+          <textarea
+            id="observaciones"
+            value={data.observaciones || ''}
+            onChange={(e) => updateData({...data, observaciones: e.target.value})}
+            placeholder="Observaciones del odontograma..."
+            rows="5"
+          />
+        </div>
+      </div>
+
+      <div className="treatments-section">
+        <h3>Tratamientos</h3>
+        {data.treatments.map((treatment, index) => (
+          <div key={index} className="treatment-item">
+            <div className="treatment-fields">
+              <div className="field-group">
+                <label>Fecha:</label>
+                <input
+                  type="date"
+                  value={treatment.date || ''}
+                  onChange={(e) => {
+                    const newTreatments = [...data.treatments];
+                    newTreatments[index].date = e.target.value;
+                    updateData({ ...data, treatments: newTreatments });
+                  }}
+                />
+              </div>
+              <div className="field-group">
+                <label>Código:</label>
+                <input
+                  type="text"
+                  value={treatment.code || ''}
+                  onChange={(e) => {
+                    const newTreatments = [...data.treatments];
+                    newTreatments[index].code = e.target.value;
+                    updateData({ ...data, treatments: newTreatments });
+                  }}
+                  placeholder="Código del tratamiento"
+                />
+              </div>
+              <div className="field-group">
+                <label>Elementos Dentarios:</label>
+                <input
+                  type="text"
+                  value={treatment.tooth_elements || ''}
+                  onChange={(e) => {
+                    const newTreatments = [...data.treatments];
+                    newTreatments[index].tooth_elements = e.target.value;
+                    updateData({ ...data, treatments: newTreatments });
+                  }}
+                  placeholder="Ej: 23"
+                />
+              </div>
+              <div className="field-group">
+                <label>Caras:</label>
+                <input
+                  type="text"
+                  value={treatment.faces || ''}
+                  onChange={(e) => {
+                    const newTreatments = [...data.treatments];
+                    newTreatments[index].faces = e.target.value;
+                    updateData({ ...data, treatments: newTreatments });
+                  }}
+                  placeholder="Ej: 34"
+                />
+              </div>
+              <div className="field-group">
+                <label>Observaciones:</label>
+                <textarea
+                  value={treatment.observations || ''}
+                  onChange={(e) => {
+                    const newTreatments = [...data.treatments];
+                    newTreatments[index].observations = e.target.value;
+                    updateData({ ...data, treatments: newTreatments });
+                  }}
+                  placeholder="Observaciones del tratamiento"
+                  rows="3"
+                />
+              </div>
+            </div>
+            <button
+              className="remove-treatment-btn"
+              onClick={() => {
+                const newTreatments = data.treatments.filter((_, i) => i !== index);
+                updateData({ ...data, treatments: newTreatments });
+              }}
+            >
+              Eliminar
+            </button>
+          </div>
+        ))}
+        <button
+          className="add-treatment-btn"
+          onClick={() => {
+            updateData({
+              ...data,
+              treatments: [...data.treatments, { date: new Date().toISOString().split('T')[0], code: '', tooth_elements: '', faces: '', observations: '' }]
+            });
+          }}
+        >
+          Agregar Tratamiento
+        </button>
       </div>
 
       <div className="json-outputs-row">
