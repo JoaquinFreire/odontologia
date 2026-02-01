@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Home.js
 import React, { useState, useEffect } from 'react';
 import '../App.css';
@@ -56,10 +57,11 @@ const Home = ({ user, handleLogout }) => {
     try {
       if (!user || !user.id) return;
 
-      const startOfDayStr = getStartOfTodayUTC();
-      const endOfDayStr = getEndOfTodayUTC();
-      const startOfDay = new Date(startOfDayStr);
-      const endOfDay = new Date(endOfDayStr);
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      endOfDay.setMilliseconds(-1);
 
       const allPending = await appointmentService.getAllPendingAppointments(user.id);
 

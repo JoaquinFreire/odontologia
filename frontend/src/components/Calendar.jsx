@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Trash2, Clock, User, Briefcase } from 'lucide-react';
 import { appointmentService } from '../services/appointmentService';
 import { getAppointmentDateLocal, getAppointmentTimeLocal } from '../utils/dateUtils';
@@ -26,22 +26,25 @@ const Calendar = ({ userId }) => {
     return slots;
   })();
 
-  useEffect(() => {
-    if (userId) loadAppointments();
-  }, [currentDate, userId]);
-
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await appointmentService.getAppointments(userId);
-      const overdue = await appointmentService.getOverdueAppointments(userId);
-      setAppointments([...data, ...overdue]);
+      const [overdue, today, future] = await Promise.all([
+        appointmentService.getOverdueAppointments(userId),
+        appointmentService.getTodayAppointments(userId),
+        appointmentService.getAppointments(userId)
+      ]);
+      setAppointments([...overdue, ...today, ...future]);
     } catch (err) {
       console.error("Error al cargar turnos:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) loadAppointments();
+  }, [currentDate, userId, loadAppointments]);
 
   // Lógica para obtener los 7 días de la semana (Lunes a Domingo)
   const getWeekDays = () => {
@@ -164,7 +167,7 @@ const Calendar = ({ userId }) => {
                       onClick={() => handleSlotClick(day, slot, apt)}
                     >
                       <span className="slot-time">{slot}</span>
-                      {apt && <div className="apt-badge">{apt.name}</div>}
+                      {apt && <div className={`apt-badge ${getAppointmentClass(apt)}`}>{apt.name}</div>}
                     </div>
                   );
                 })}
@@ -284,15 +287,18 @@ export default Calendar;
 //     return appointments.filter((apt) => getAppointmentDateLocal(apt.datetime) === dateStr);
 //   };
 
-//   const getAppointmentClass = (appointment) => {
-//     const aptDateLocal = getAppointmentDateLocal(appointment.datetime);
-//     const today = new Date();
-//     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const getAppointmentClass = (appointment) => {
+    const aptDateLocal = getAppointmentDateLocal(appointment.datetime);
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-//     if (overdueAppointments.some(oap => oap.id === appointment.id)) return 'overdue';
-//     if (aptDateLocal === todayStr) return 'today';
-//     return 'future';
-//   };
+    const aptDate = new Date(aptDateLocal);
+    const todayDate = new Date(todayStr);
+
+    if (aptDate < todayDate) return 'overdue';
+    if (aptDate.getTime() === todayDate.getTime()) return 'today';
+    return 'future';
+  };
 
 //   const goToPreviousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
 //   const goToNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));

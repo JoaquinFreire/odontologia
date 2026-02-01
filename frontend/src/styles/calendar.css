@@ -95,6 +95,24 @@
   z-index: 2;
 }
 
+.apt-badge.overdue {
+  background: #ffe6e6;
+  border-left-color: #ff6b6b;
+  color: #d4380d;
+}
+
+.apt-badge.today {
+  background: #f6ffed;
+  border-left-color: #52c41a;
+  color: #389e0d;
+}
+
+.apt-badge.future {
+  background: #e6f7ff;
+  border-left-color: #1890ff;
+  color: #0958d9;
+}
+
 /* MODAL */
 .modal-overlay {
   position: fixed; top:0; left:0; width:100%; height:100%;
