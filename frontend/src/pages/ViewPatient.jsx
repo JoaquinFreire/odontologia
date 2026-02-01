@@ -326,7 +326,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                             onClick={() => paginate(currentPage - 1)}
                                             disabled={currentPage === 1}
                                         >
-                                            ← Anterior
+                                            ←
                                         </button>
                                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                                             <button
@@ -342,7 +342,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                             onClick={() => paginate(currentPage + 1)}
                                             disabled={currentPage === totalPages}
                                         >
-                                            Siguiente →
+                                             →
                                         </button>
                                     </div>
                                 </div>
