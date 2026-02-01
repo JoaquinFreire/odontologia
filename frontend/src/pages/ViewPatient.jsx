@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useMemo, useEffect } from 'react';
 import '../styles/ViewPatient.css';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalPatients, setTotalPatients] = useState(0);
     const [patientsPerPage] = useState(10);
 
     // Modales
@@ -45,6 +47,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                 if (result.success) {
                     setPatients(result.data);
                     setTotalPages(result.pagination.totalPages);
+                    setTotalPatients(result.pagination.totalPatients);
                 }
             } catch (error) { console.error(error); } finally { setLoading(false); }
         };
@@ -86,31 +89,38 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
         );
     }, [searchTerm, patients]);
 
-    return (
-        <div className="app">
-            <NavBar user={user} handleLogout={() => navigate('/login')} activeNav="patients" />
-            <main className="main-content">
-                <div className="view-patient-container">
-                    <div className="header-section">
-                        <h1 className="page-title">Gestión de Pacientes</h1>
-                        <p className="page-subtitle">Control clínico y de pagos</p>
-                    </div>
+    // Cambiar página
+    const paginate = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
 
-                    <SearchPatients searchTerm={searchTerm} onSearchChange={(e) => setSearchTerm(e.target.value)} />
-
-                    <div className="patients-table-container">
-                        <div className="table-wrapper">
-                            <table className="patients-table">
-                                <thead>
-                                    <tr>
-                                        <th>Paciente</th>
-                                        <th>DNI</th>
-                                        <th>Edad</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredPatients.map(p => (
+    const renderContent = () => {
+        if (patients.length === 0) {
+            return (
+                <div className="no-results">
+                    <p style={{ fontSize: '18px', color: '#666' }}>
+                        No hay pacientes registrados
+                    </p>
+                </div>
+            );
+        }
+        return (
+            <>
+                <div className="patients-table-container">
+                    <div className="table-wrapper">
+                        <table className="patients-table">
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>DNI</th>
+                                    <th>Edad</th>
+                                    <th>Ocupación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredPatients.length > 0 ? (
+                                    filteredPatients.map(p => (
                                         <tr key={p.id}>
                                             <td>
                                                 <div className="patient-info">
@@ -129,121 +139,69 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : patients.length === 0 ? (
-                        <div className="no-results">
-                            <p style={{ fontSize: '18px', color: '#666' }}>
-                                No hay pacientes registrados
-                            </p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="patients-table-container">
-                                <div className="table-wrapper">
-                                    <table className="patients-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Nombre y Apellido</th>
-                                                <th>DNI</th>
-                                                <th>Edad</th>
-                                                <th>Ocupación</th>
-                                                <th>Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {tablePatients.length > 0 ? (
-                                                tablePatients.map(patient => (
-                                                    <tr key={patient.id}>
-                                                        <td>
-                                                            <div className="patient-info">
-                                                                <div className="patient-avatar">
-                                                                    <UserIcon />
-                                                                </div>
-                                                                <div className="patient-details">
-                                                                    <p className="patient-name">{patient.fullName}</p>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="dni-text">{patient.dni}</td>
-                                                        <td>{patient.age ? `${patient.age} años` : 'N/A'}</td>
-                                                        <td>{patient.occupation || '-'}</td>
-                                                        <td>
-                                                            <div className="action-buttons">
-                                                                <button
-                                                                    className="action-btn details-btn"
-                                                                    title="Ver detalles"
-                                                                    onClick={() => openPatientDetails(patient)}
-                                                                >
-                                                                    👁️
-                                                                </button>
-                                                                <button
-                                                                    className="action-btn history-btn"
-                                                                    title="Historial clínico"
-                                                                    onClick={() => openMedicalHistory(patient)}
-                                                                >
-                                                                    📋
-                                                                </button>
-                                                                <button
-                                                                    className="action-btn appointment-btn"
-                                                                    title="Agendar turno"
-                                                                    onClick={() => openAppointmentModal(patient)}
-                                                                >
-                                                                    📅
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
-                                                        No se encontraron pacientes con esa búsqueda
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                                            No se encontraron pacientes con esa búsqueda
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                            {/* Paginación */}
-                            {totalPages > 1 && (
-                                <div className="pagination-container">
-                                    <div className="pagination-info">
-                                        Página {currentPage} de {totalPages} • Total: {totalPatients} pacientes
-                                    </div>
-                                    <div className="pagination-buttons">
-                                        <button
-                                            className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
-                                            onClick={() => paginate(currentPage - 1)}
-                                            disabled={currentPage === 1}
-                                        >
-                                            ←
-                                        </button>
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                                            <button
-                                                key={page}
-                                                className={`page-number ${currentPage === page ? 'active' : ''}`}
-                                                onClick={() => paginate(page)}
-                                            >
-                                                {page}
-                                            </button>
-                                        ))}
-                                        <button
-                                            className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
-                                            onClick={() => paginate(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
-                                        >
-                                             →
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    )}
+                {/* Paginación */}
+                {totalPages > 1 && (
+                    <div className="pagination-container">
+                        <div className="pagination-info">
+                            Página {currentPage} de {totalPages} • Total: {totalPatients} pacientes
+                        </div>
+                        <div className="pagination-buttons">
+                            <button
+                                className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                                onClick={() => paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                ←
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button
+                                    key={page}
+                                    className={`page-number ${currentPage === page ? 'active' : ''}`}
+                                    onClick={() => paginate(page)}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                                onClick={() => paginate(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                 →
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </>
+        );
+    };
+
+    return (
+        <div className="app">
+            <NavBar user={user} handleLogout={() => navigate('/login')} activeNav="patients" />
+            <main className="main-content">
+                <div className="view-patient-container">
+                    <div className="header-section">
+                        <h1 className="page-title">Gestión de Pacientes</h1>
+                        <p className="page-subtitle">Control clínico y de pagos</p>
+                    </div>
+
+                    <SearchPatients searchTerm={searchTerm} onSearchChange={(e) => setSearchTerm(e.target.value)} />
+
+                    {renderContent()}
                     {/* MODAL COBROS */}
                     {showPaymentModal && selectedPatient && (
                         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
