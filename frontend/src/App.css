@@ -1479,3 +1479,76 @@ body {
 }
 
 
+/* Contenedor principal del Modal para evitar que se rompa */
+.modal-content {
+  width: 95%;
+  max-width: 500px; /* Ajusta según prefieras */
+  max-height: 90vh;
+  overflow-y: auto; /* Permite scroll interno si la pantalla es chica */
+  border-radius: 12px;
+  background: #fff;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Sección de Pago */
+.payment-section {
+  background-color: #f8faff;
+  border: 1.5px dashed #cbdcf7;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 15px 0;
+}
+
+.payment-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0066cc;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+/* Grid controlado para que no se salga del contenedor */
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dos columnas iguales */
+  gap: 2px;
+}
+
+/* Inputs específicos de la sección de pago */
+.payment-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d9e6;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box; /* Fundamental para que el padding no ensanche el input */
+}
+
+.payment-input:focus {
+  outline: none;
+  border-color: #0066cc;
+  background-color: #fff;
+}
+
+/* Ajuste general de los form-groups para evitar saltos de línea raros */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+/* Media Query para móviles: si la pantalla es muy angosta, ponemos los inputs uno abajo del otro */
+@media (max-width: 400px) {
+  .payment-grid {
+    grid-template-columns: 1fr;
+  }
+}
