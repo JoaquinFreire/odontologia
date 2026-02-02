@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { supabase } from '../config/supabaseClient';
 
 // Guardar o actualizar un paciente
@@ -135,7 +136,7 @@ export const saveCompletePatient = async (patientData, anamnesisData, consentDat
       obstetra_tel: anamnesisData.obstetricianPhone || null,
       medicamento: anamnesisData.takesMedication || false,
       medicamento_detalles: anamnesisData.medication || null,
-      antecedentes: anamnesisData.diseases,
+      antecedentes: JSON.stringify(anamnesisData.diseases),
       observaciones: anamnesisData.observations || null
     };
 
@@ -279,9 +280,10 @@ export const getPatientWithAnamnesis = async (patientId, userId) => {
 };
 
 // Actualizar anamnesis existente
-export const updatePatientAnamnesis = async (patientId, anamnesisData) => {
+export const updatePatientAnamnesis = async (patientId, anamnesisData, userId, anamnesisId = null) => {
   try {
     const anamnesisPayload = {
+      patient_id: patientId,
       alergico: anamnesisData.allergies.hasAllergies || false,
       medico_cabecera: anamnesisData.primaryDoctor || null,
       medico_tel: anamnesisData.primaryDoctorPhone || null,
@@ -299,14 +301,25 @@ export const updatePatientAnamnesis = async (patientId, anamnesisData) => {
       obstetra_tel: anamnesisData.obstetricianPhone || null,
       medicamento: anamnesisData.takesMedication || false,
       medicamento_detalles: anamnesisData.medication || null,
-      antecedentes: anamnesisData.diseases
+      antecedentes: JSON.stringify(anamnesisData.diseases),
+      observaciones: anamnesisData.observations || null
     };
 
-    const { data, error } = await supabase
-      .from('anamnesis_answers')
-      .update(anamnesisPayload)
-      .eq('patient_id', patientId)
-      .select();
+    let data, error;
+    if (anamnesisId) {
+      // Update existing
+      ({ data, error } = await supabase
+        .from('anamnesis_answers')
+        .update(anamnesisPayload)
+        .eq('id', anamnesisId)
+        .select());
+    } else {
+      // Insert new
+      ({ data, error } = await supabase
+        .from('anamnesis_answers')
+        .insert([anamnesisPayload])
+        .select());
+    }
 
     if (error) throw error;
 
@@ -370,4 +383,329 @@ export const calculateAge = (birthdate) => {
     age--;
   }
   return age;
+};
+
+// Obtener odontograma de un paciente (última versión)
+export const getPatientOdontograma = async (patientId, userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('odontograma')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('version', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+
+    if (data) {
+      // Parsear el formato JSON con manejo de errores
+      let adultData = { teethState: {}, connections: [] };
+      let childData = { teethState: {}, connections: [] };
+
+      try {
+        if (data.formato) {
+          adultData = JSON.parse(data.formato);
+        }
+      } catch (jsonError) {
+        console.warn('Error parsing odontograma formato:', jsonError);
+        adultData = { teethState: {}, connections: [] };
+      }
+
+      try {
+        if (data.formato_nino) {
+          childData = JSON.parse(data.formato_nino);
+        }
+      } catch (jsonError) {
+        console.warn('Error parsing odontograma formato_nino:', jsonError);
+        childData = { teethState: {}, connections: [] };
+      }
+
+      return {
+        success: true,
+        data: {
+          adult: adultData,
+          child: childData,
+          observaciones: data.observaciones || '',
+          elementos_dentarios: data.elementos_dentarios || '',
+          version: data.version || 1,
+          treatments: [] // Se obtendrán por separado
+        }
+      };
+    }
+
+    return { success: true, data: null };
+  } catch (error) {
+    console.error('Error al obtener odontograma:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Obtener consentimiento de un paciente
+export const getPatientConsent = async (patientId) => {
+  try {
+    const { data, error } = await supabase
+      .from('consent')
+      .select('*')
+      .eq('patient_id', patientId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+
+    return { success: true, data: data || null };
+  } catch (error) {
+    console.error('Error al obtener consentimiento:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Obtener tratamientos de un paciente
+export const getPatientTreatments = async (patientId) => {
+  try {
+    const { data, error } = await supabase
+      .from('treatments')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    return { success: true, data: data || [] };
+  } catch (error) {
+    console.error('Error al obtener tratamientos:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Obtener historial clínico completo de un paciente
+export const getCompletePatientHistory = async (patientId, userId) => {
+  try {
+    const patientResult = await getPatient(patientId, userId);
+    if (!patientResult.success) return patientResult;
+
+    const anamnesisResult = await getPatientWithAnamnesis(patientId, userId);
+    const odontogramaResult = await getPatientOdontograma(patientId, userId);
+    const consentResult = await getPatientConsent(patientId);
+    const treatmentsResult = await getPatientTreatments(patientId);
+
+    return {
+      success: true,
+      data: {
+        patient: patientResult.data,
+        anamnesis: anamnesisResult.anamnesis,
+        odontograma: odontogramaResult.data,
+        consent: consentResult.data,
+        treatments: treatmentsResult.data
+      }
+    };
+  } catch (error) {
+    console.error('Error al obtener historial completo:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Obtener odontograma por versión
+export const getOdontogramaByVersion = async (patientId, version, userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('odontograma')
+      .select('*')
+      .eq('patient_id', patientId)
+      .eq('version', version)
+      .single();
+
+    if (error) throw error;
+
+    // Parsear como en getPatientOdontograma
+    let adultData = { teethState: {}, connections: [] };
+    let childData = { teethState: {}, connections: [] };
+
+    try {
+      if (data.formato) {
+        adultData = JSON.parse(data.formato);
+      }
+    } catch (jsonError) {
+      console.warn('Error parsing odontograma formato:', jsonError);
+      adultData = { teethState: {}, connections: [] };
+    }
+
+    try {
+      if (data.formato_nino) {
+        childData = JSON.parse(data.formato_nino);
+      }
+    } catch (jsonError) {
+      console.warn('Error parsing odontograma formato_nino:', jsonError);
+      childData = { teethState: {}, connections: [] };
+    }
+
+    return { 
+      success: true, 
+      data: {
+        adult: adultData,
+        child: childData,
+        observaciones: data.observaciones || '',
+        elementos_dentarios: data.elementos_dentarios || '',
+        version: data.version,
+        treatments: [] // No incluir tratamientos aquí
+      }
+    };
+  } catch (error) {
+    console.error('Error al obtener odontograma por versión:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Actualizar datos del paciente (solo campos editables)
+export const updatePatientData = async (patientId, data) => {
+  try {
+    const { data: updated, error } = await supabase
+      .from('patient')
+      .update({
+        tel: data.phone,
+        email: data.email,
+        address: data.address,
+        occupation: data.occupation,
+        affiliate_number: data.healthInsurance?.number,
+        holder: data.healthInsurance?.isHolder
+      })
+      .eq('id', patientId)
+      .select();
+
+    if (error) throw error;
+    return { success: true, data: updated[0] };
+  } catch (error) {
+    console.error('Error al actualizar paciente:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Actualizar odontograma
+export const updateOdontograma = async (patientId, odontogramaData, userId, saveTreatments = true) => {
+  try {
+    const formato = JSON.stringify({
+      teethState: odontogramaData.adult.teethState,
+      connections: odontogramaData.adult.connections
+    });
+    const formato_nino = JSON.stringify({
+      teethState: odontogramaData.child.teethState,
+      connections: odontogramaData.child.connections
+    });
+
+    const { data, error } = await supabase
+      .from('odontograma')
+      .insert({
+        patient_id: patientId,
+        formato,
+        formato_nino,
+        observaciones: odontogramaData.observaciones,
+        elementos_dentarios: odontogramaData.elementos_dentarios,
+        version: odontogramaData.version
+      })
+      .select();
+
+    if (error) throw error;
+
+    // Guardar tratamientos si existen y saveTreatments
+    if (saveTreatments && odontogramaData.treatments && odontogramaData.treatments.length > 0) {
+      for (const treatment of odontogramaData.treatments) {
+        const treatmentPayload = {
+          patient_id: patientId,
+          date: treatment.date || null,
+          code: treatment.code || null,
+          tooth_elements: treatment.tooth_elements || null,
+          faces: treatment.faces || null,
+          observations: treatment.observations || null
+        };
+
+        const { error: treatmentError } = await supabase
+          .from('treatments')
+          .insert([treatmentPayload]);
+
+        if (treatmentError) {
+          console.error('Error saving treatment:', treatmentError);
+          // No throw, continue
+        }
+      }
+    }
+
+    return { success: true, data: data[0] };
+  } catch (error) {
+    console.error('Error al actualizar odontograma:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Actualizar tratamientos
+export const updateTreatments = async (patientId, treatments) => {
+  try {
+    // Primero, eliminar tratamientos existentes
+    const { error: deleteError } = await supabase
+      .from('treatments')
+      .delete()
+      .eq('patient_id', patientId);
+
+    if (deleteError) throw deleteError;
+
+    // Luego, insertar nuevos
+    if (treatments && treatments.length > 0) {
+      const treatmentsPayload = treatments.map(t => ({
+        patient_id: patientId,
+        date: t.date || null,
+        code: t.code || null,
+        tooth_elements: t.tooth_elements || null,
+        faces: t.faces || null,
+        observations: t.observations || null
+      }));
+
+      const { error: insertError } = await supabase
+        .from('treatments')
+        .insert(treatmentsPayload);
+
+      if (insertError) throw insertError;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error al actualizar tratamientos:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Actualizar consentimiento
+export const updateConsent = async (patientId, consentData) => {
+  try {
+    const { data, error } = await supabase
+      .from('consent')
+      .upsert({
+        patient_id: patientId,
+        text: consentData.text,
+        datetime: consentData.datetime,
+        accepted: consentData.accepted
+      })
+      .select();
+
+    if (error) throw error;
+    return { success: true, data: data[0] };
+  } catch (error) {
+    console.error('Error al actualizar consentimiento:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Obtener versiones de odontograma de un paciente
+// eslint-disable-next-line no-unused-vars
+export const getOdontogramaVersions = async (patientId, userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('odontograma')
+      .select('version')
+      .eq('patient_id', patientId)
+      .order('version', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data: data.map(item => item.version) };
+  } catch (error) {
+    console.error('Error al obtener versiones de odontograma:', error);
+    return { success: false, error: error.message };
+  }
 };

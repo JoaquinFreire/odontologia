@@ -257,7 +257,7 @@
   margin-top: 2px;
 }
 
-/* Sección de encabezado mejorada */
+/* Botón de guardar por sección */
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -270,12 +270,36 @@
 .section-header h3 {
   color: #1a237e;
   font-size: 18px;
+  margin: 0;
 }
 
-.section-header .section-subtitle {
-  color: #666;
-  font-size: 12px;
-  margin: 0;
+.btn-primary.small {
+  padding: 8px 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Indicador de cambios no guardados */
+.unsaved-changes-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #ff9800;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.unsaved-changes-indicator::before {
+  content: '⚠️';
 }
 
 .section-subtitle {
@@ -402,4 +426,175 @@
     .patient-header h1 {
         font-size: 20px;
     }
+}
+
+/* Estilos para campos readonly */
+input.readonly,
+textarea.readonly {
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
+  border: 1px solid #ddd;
+}
+
+input.readonly:focus,
+textarea.readonly:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.checkbox-group input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Botón de volver */
+.btn-back {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 15px;
+  transition: all 0.3s;
+}
+
+.btn-back:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+/* Loading container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0066cc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Treatments section */
+.treatments-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.treatments-section h3 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.treatments-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.treatments-table th, .treatments-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.treatments-table th {
+  background-color: #f2f2f2;
+}
+
+.new-treatment-row input, .new-treatment-row textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-danger.small {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-danger.small:hover {
+  background: #d32f2f;
+}
+
+.treatments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.treatment-item {
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.treatment-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.treatment-fields .field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.treatment-fields .field-group label {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.treatment-fields .field-group input,
+.treatment-fields .field-group textarea {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #f9f9f9;
+  color: #666;
+}
+
+.treatment-fields .field-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.version-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.version-selector select {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }

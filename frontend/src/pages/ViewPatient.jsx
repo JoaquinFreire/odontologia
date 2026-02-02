@@ -186,7 +186,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
 
     // Ir a historial clínico
     const openMedicalHistory = (patient) => {
-        navigate(`/patient/${patient.id}/medical-history`);
+        navigate(`/patients/${patient.id}/history`);
     };
 
     // Cambiar página

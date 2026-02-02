@@ -123,10 +123,19 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
     treatments: []
   });
 
+  const [newTreatment, setNewTreatment] = useState({ 
+    date: new Date().toISOString().split('T')[0], 
+    code: '', 
+    tooth_elements: '', 
+    faces: '', 
+    observations: '' 
+  });
+
   const tabs = [
     { id: 'datos', label: 'Datos Personales', icon: <User size={20} /> },
     { id: 'anamnesis', label: 'Anamnesis', icon: <Briefcase size={20} /> },
     { id: 'odontograma', label: 'Odontograma', icon: <FileText size={20} /> },
+    { id: 'tratamientos', label: 'Tratamientos', icon: <Clipboard size={20} /> },
     { id: 'consentimiento', label: 'Consentimiento', icon: <Clipboard size={20} /> }
   ];
 
@@ -230,6 +239,89 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
           anamnesisData={anamnesisData} 
           setAnamnesisData={setAnamnesisData} 
         />;
+      case 'tratamientos':
+        return (
+          <div>
+            <div className="treatments-section">
+              <h3>Tratamientos Realizados</h3>
+              <table className="treatments-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Código</th>
+                    <th>Dientes</th>
+                    <th>Caras</th>
+                    <th>Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {odontogramaData.treatments.map((treatment, index) => (
+                    <tr key={index}>
+                      <td>{treatment.date || 'N/A'}</td>
+                      <td>{treatment.code || 'N/A'}</td>
+                      <td>{treatment.tooth_elements || 'N/A'}</td>
+                      <td>{treatment.faces || 'N/A'}</td>
+                      <td>{treatment.observations || 'N/A'}</td>
+                    </tr>
+                  ))}
+                  <tr className="new-treatment-row">
+                    <td>
+                      <input
+                        type="date"
+                        value={newTreatment.date}
+                        onChange={(e) => setNewTreatment({...newTreatment, date: e.target.value})}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={newTreatment.code}
+                        onChange={(e) => setNewTreatment({...newTreatment, code: e.target.value})}
+                        maxLength="12"
+                        placeholder="Máx 12 caracteres"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={newTreatment.tooth_elements}
+                        onChange={(e) => setNewTreatment({...newTreatment, tooth_elements: e.target.value})}
+                        maxLength="50"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={newTreatment.faces}
+                        onChange={(e) => setNewTreatment({...newTreatment, faces: e.target.value})}
+                        maxLength="20"
+                      />
+                    </td>
+                    <td>
+                      <textarea
+                        value={newTreatment.observations}
+                        onChange={(e) => setNewTreatment({...newTreatment, observations: e.target.value})}
+                        rows="2"
+                      ></textarea>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              {(newTreatment.date || newTreatment.code || newTreatment.tooth_elements || newTreatment.faces || newTreatment.observations) && (
+                <button
+                  className="btn-primary small"
+                  onClick={() => {
+                    const updatedTreatments = [...odontogramaData.treatments, newTreatment];
+                    setOdontogramaData(prev => ({ ...prev, treatments: updatedTreatments }));
+                    setNewTreatment({ date: new Date().toISOString().split('T')[0], code: '', tooth_elements: '', faces: '', observations: '' });
+                  }}
+                >
+                  Agregar Tratamiento
+                </button>
+              )}
+            </div>
+          </div>
+        );
       default:
         return <DatosPersonales 
           patientData={patientData} 
