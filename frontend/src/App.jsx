@@ -1,12 +1,12 @@
 import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
-import Pruebajoa from "./pages/pruebajoa";
 import LoginForm from './pages/LoginForm';
 import Home from './pages/Home';
 import Diary from './pages/Diary';
 import ViewPatient from './pages/ViewPatient';
 import PatientRecord from './pages/PatientRecord';
+import History from './pages/History';
 import Configuration from './pages/Configuration';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/authService';
@@ -104,18 +104,18 @@ function App() {
           } 
         />
         <Route 
-          path="/configuration" 
+          path="/patients/:id/history" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Configuration setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
+              <History setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />
         <Route 
-          path="/pruebajoa" 
+          path="/configuration" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Pruebajoa />
+              <Configuration setIsAuthenticated={setIsAuthenticated} user={user} setUser={setUser} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />

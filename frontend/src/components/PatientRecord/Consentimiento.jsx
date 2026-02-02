@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
-const Consentimiento = ({ patientData, user, consentData, setConsentData }) => {
+const Consentimiento = ({ patientData, user, consentData, setConsentData, initialText }) => {
   // Actualizar datos del doctor cuando el componente monta o user cambia
   console.log(user, " Aca");
   useEffect(() => {
@@ -22,7 +22,7 @@ const Consentimiento = ({ patientData, user, consentData, setConsentData }) => {
     }));
   };
 
-  const consentText = `En este acto, yo ${patientData.name || '___________'} ${patientData.lastname || '___________'} DNI ${patientData.dni || '___________'} autorizo a Od ${user?.name || '___________'} M.P. ${user?.tuition || '___________'} y/o asociados o ayudantes a realizar el tratamiento informado, conversado con el profesional sobre la naturaleza y propósito del tratamiento, sobre la posibilidad de complicaciones, los riesgos y administración de anestesia local, práctica, radiografías y otros métodos de diagnóstico.`;
+  const consentText = initialText || `En este acto, yo ${patientData.name || '___________'} ${patientData.lastname || '___________'} DNI ${patientData.dni || '___________'} autorizo a Od ${user?.name || '___________'} M.P. ${user?.tuition || '___________'} y/o asociados o ayudantes a realizar el tratamiento informado, conversado con el profesional sobre la naturaleza y propósito del tratamiento, sobre la posibilidad de complicaciones, los riesgos y administración de anestesia local, práctica, radiografías y otros métodos de diagnóstico.`;
 
   return (
     <div className="consentimiento-section">

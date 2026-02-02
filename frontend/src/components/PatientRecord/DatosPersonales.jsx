@@ -1,9 +1,10 @@
 // components/PatientRecord/DatosPersonales.jsx
 import React from 'react';
-import { Save, Phone, Mail, Home, Briefcase, FileText } from 'lucide-react';
+import { Phone, Mail, Home, Briefcase, FileText } from 'lucide-react';
 
-const DatosPersonales = ({ patientData, setPatientData }) => {
+const DatosPersonales = ({ patientData, setPatientData, readOnlyFields = [] }) => {
   const handleInputChange = (field, value) => {
+    if (readOnlyFields.includes(field)) return; // No cambiar si es readonly
     setPatientData(prev => ({
       ...prev,
       [field]: value
@@ -20,14 +21,12 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
     }));
   };
 
+  const isReadOnly = (field) => readOnlyFields.includes(field);
+
   return (
     <div className="datos-personales-section">
       <div className="section-header">
         <h3>Datos Personales</h3>
-        <button className="btn-primary">
-          <Save size={18} />
-          <span>Guardar Cambios</span>
-        </button>
       </div>
 
       <div className="datos-form">
@@ -40,6 +39,8 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
               value={patientData.name || ''}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Nombre"
+              readOnly={isReadOnly('name')}
+              className={isReadOnly('name') ? 'readonly' : ''}
             />
           </div>
           <div className="form-group">
@@ -50,6 +51,8 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
               value={patientData.lastname || ''}
               onChange={(e) => handleInputChange('lastname', e.target.value)}
               placeholder="Apellido"
+              readOnly={isReadOnly('lastname')}
+              className={isReadOnly('lastname') ? 'readonly' : ''}
             />
           </div>
           <div className="form-group">
@@ -62,6 +65,9 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
                 value={patientData.dni || ''}
                 onChange={(e) => handleInputChange('dni', e.target.value)}
                 placeholder="DNI sin puntos"
+                readOnly={isReadOnly('dni')}
+                className={isReadOnly('dni') ? 'readonly' : ''}
+                maxLength="12"
               />
             </div>
           </div>
@@ -75,10 +81,12 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
               id="birthDate"
               value={patientData.birthDate || ''}
               onChange={(e) => handleInputChange('birthDate', e.target.value)}
+              readOnly={isReadOnly('birthDate')}
+              className={isReadOnly('birthDate') ? 'readonly' : ''}
             />
           </div>
           <div className="form-group">
-            <label htmlFor="phone">Teléfono *</label>
+            <label htmlFor="phone">Teléfono</label>
             <div className="input-with-icon">
               <Phone size={16} />
               <input
@@ -87,6 +95,8 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
                 value={patientData.phone || ''}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="+1 234 567 890"
+                readOnly={isReadOnly('phone')}
+                className={isReadOnly('phone') ? 'readonly' : ''}
               />
             </div>
           </div>
@@ -94,7 +104,7 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="email">Email *</label>
+            <label htmlFor="email">Email</label>
             <div className="input-with-icon">
               <Mail size={16} />
               <input
@@ -103,6 +113,8 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
                 value={patientData.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="email@ejemplo.com"
+                readOnly={isReadOnly('email')}
+                className={isReadOnly('email') ? 'readonly' : ''}
               />
             </div>
           </div>
@@ -116,6 +128,8 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
                 value={patientData.address || ''}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 placeholder="Calle y número"
+                readOnly={isReadOnly('address')}
+                className={isReadOnly('address') ? 'readonly' : ''}
               />
             </div>
           </div>
@@ -132,6 +146,8 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
                 value={patientData.occupation || ''}
                 onChange={(e) => handleInputChange('occupation', e.target.value)}
                 placeholder="Profesión u oficio"
+                readOnly={isReadOnly('occupation')}
+                className={isReadOnly('occupation') ? 'readonly' : ''}
               />
             </div>
           </div>
@@ -148,6 +164,9 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
                 value={patientData.healthInsurance?.number || ''}
                 onChange={(e) => handleInsuranceChange('number', e.target.value)}
                 placeholder="Número de afiliado"
+                readOnly={isReadOnly('healthInsurance.number')}
+                className={isReadOnly('healthInsurance.number') ? 'readonly' : ''}
+                maxLength="12"
               />
             </div>
             <div className="form-group checkbox-group">
@@ -156,6 +175,7 @@ const DatosPersonales = ({ patientData, setPatientData }) => {
                   type="checkbox"
                   checked={patientData.healthInsurance?.isHolder || false}
                   onChange={(e) => handleInsuranceChange('isHolder', e.target.checked)}
+                  disabled={isReadOnly('healthInsurance.isHolder')}
                 />
                 <span className="checkmark"></span>
                 Titular
