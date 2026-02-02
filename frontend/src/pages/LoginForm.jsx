@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 import { authService } from '../services/authService';
 import { Mail, Lock, AlertCircle, Info } from 'lucide-react'; 
+import logo from '../img/logo.webp'; 
 
 const LoginForm = ({ setIsAuthenticated, setUser }) => {
   const [usuario, setUsuario] = useState('');
@@ -12,6 +15,10 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
   const [passError, setPassError] = useState(''); // Error formato contraseña
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Login';
+  }, []);
 
   // Validación de Email
   const validarEmail = (email) => {
@@ -67,7 +74,7 @@ const LoginForm = ({ setIsAuthenticated, setUser }) => {
       <div className="login-container">
         <div className="login-card">
           <div className="logo-section">
-            <span className="logo-icon">🦷</span>
+            <img className="logo-icon" src={logo} alt="Logo Odontología" />
             <h1 className="clinic-name">Odontología</h1>
             <p className="clinic-subname">Clínica Odontológica Monica</p>
           </div>

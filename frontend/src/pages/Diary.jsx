@@ -15,6 +15,10 @@ const Diary = ({ user, handleLogout }) => {
   const [appointments, setAppointments] = useState([]);
   const [appointmentMap, setAppointmentMap] = useState(new Map());
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Agenda';
+  }, []);
   
   // Estados para el Modal
   const [showModal, setShowModal] = useState(false);
