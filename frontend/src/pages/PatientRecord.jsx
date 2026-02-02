@@ -1,5 +1,6 @@
+/* eslint-disable no-undef */
 // PatientRecord.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/PatientRecord.css';
 import '../styles/NewPatient.css';
 
@@ -32,6 +33,10 @@ const PatientRecord = ({ setIsAuthenticated, user, setUser }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Nuevo Paciente';
+  }, []);
 
   // Datos compartidos entre componentes
   const [patientData, setPatientData] = useState({

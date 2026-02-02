@@ -28,6 +28,10 @@ const History = ({ setIsAuthenticated, user, setUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: patientId } = useParams();
+
+  useEffect(() => {
+    document.title = 'Historial del Paciente';
+  }, []);
   const patient = location.state?.patient;
 
   // Estado para detectar cambios no guardados

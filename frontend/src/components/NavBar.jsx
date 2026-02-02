@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Users, FileText, Settings, UserPlus, Home, Menu, X } from 'lucide-react';
 import { User } from 'lucide-react';
-
+import logo from '../img/logodiente.webp'; 
 const NavBar = ({ activeNav, setActiveNav = () => {}, user, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,7 +63,7 @@ const NavBar = ({ activeNav, setActiveNav = () => {}, user, handleLogout }) => {
       <aside className={`sidebar ${isMenuOpen ? 'menu-open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
-            <div className="logo-icon">🦷</div>
+            <img className="logo-icon2" src={logo} alt="Logo Odontología" />
             <h2>Odontología</h2>
           </div>
           <p className="clinic-subtitle">Clínica Odontológica</p>

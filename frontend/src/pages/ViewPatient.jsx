@@ -18,6 +18,10 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
     const [totalPages, setTotalPages] = useState(1);
     const [patientsPerPage] = useState(10);
 
+    useEffect(() => {
+        document.title = 'Ver Pacientes';
+    }, []);
+
     // Modales
     const [showPatientDetails, setShowPatientDetails] = useState(false);
     const [showAppointmentModal, setShowAppointmentModal] = useState(false);

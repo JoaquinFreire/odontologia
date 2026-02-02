@@ -18,6 +18,10 @@ const Home = ({ user, handleLogout }) => {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    document.title = 'Home';
+  }, []);
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [overdueAppointments, setOverdueAppointments] = useState([]);
   const [nextAppointments, setNextAppointments] = useState([]);

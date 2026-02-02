@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, User as UserIcon, Mail, CreditCard } from 'lucide-react';
 import NavBar from '../components/NavBar';
@@ -18,6 +19,10 @@ const Configuration = ({ setIsAuthenticated, user, setUser }) => {
   const [messageType, setMessageType] = useState('');
   const [activeNav, setActiveNav] = useState('configuration');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Configuración';
+  }, []);
 
   useEffect(() => {
     loadUserData();

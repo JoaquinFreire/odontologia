@@ -57,10 +57,18 @@
 }
 
 .logo-icon {
-  font-size: 60px;
-  margin-bottom: 15px;
+  width: 150px;
+  height: auto;
   display: block;
   animation: bounce 2s infinite;
+  margin: 0 auto 15px auto;
+}
+.logo-icon2 {
+  width: 70px;
+  height: auto;
+  display: block;
+  animation: bounce 2s infinite;
+  margin: 0 auto;
 }
 
 @keyframes bounce {
