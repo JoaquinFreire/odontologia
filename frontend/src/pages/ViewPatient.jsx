@@ -1,139 +1,84 @@
-// eslint-disable-next-line no-unused-vars
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import '../styles/ViewPatient.css';
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import SearchPatients from '../components/SearchPatients';
-import PatientsTable from '../components/PatientsTable';
-import PaginationControls from '../components/PaginationControls';
 import { getAllPatients, calculateAge } from '../services/patientService';
 import { appointmentService } from '../services/appointmentService';
 
-// Iconos como componentes de React
 const UserIcon = () => <span className="icon">👤</span>;
-const CalendarIcon = () => <span className="icon">📅</span>;
-const CloseIcon = () => <span className="icon">✕</span>;
 
 const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
-    // Estado para pacientes
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-
-    // Paginación
     const [currentPage, setCurrentPage] = useState(1);
-    const [patientsPerPage] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
-    const [totalPatients, setTotalPatients] = useState(0);
+    const [patientsPerPage] = useState(10);
 
     // Modales
     const [showPatientDetails, setShowPatientDetails] = useState(false);
     const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-
-    // Paciente seleccionado
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    
+    // Datos de Cobro
     const [selectedPatient, setSelectedPatient] = useState(null);
-
-    // Formulario de turno
-    const [appointmentFormData, setAppointmentFormData] = useState({
-        name: '',
-        date: '',
-        time: '',
-        type: '',
-        dni: ''
+    const [paymentHistory, setPaymentHistory] = useState([]);
+    const [totalBudget, setTotalBudget] = useState(0);
+    const [newPayment, setNewPayment] = useState({
+        amount: '', method: 'Efectivo', date: new Date().toISOString().split('T')[0]
     });
-    const [schedulingAppointment, setSchedulingAppointment] = useState(false);
 
-    const [activeNav, setActiveNav] = useState('patients');
+    // Datos de Turno
+    const [appointmentFormData, setAppointmentFormData] = useState({
+        name: '', date: '', time: '', type: '', dni: ''
+    });
+
     const navigate = useNavigate();
 
-    // Cargar pacientes cuando cambia la página o el usuario
     useEffect(() => {
         const loadPatients = async () => {
-            if (!user || !user.id) {
-                console.error('No user found');
-                return;
-            }
-
+            if (!user?.id) return;
             try {
                 setLoading(true);
-                console.log(`Cargando pacientes - página ${currentPage}`);
-                
                 const result = await getAllPatients(user.id, currentPage, patientsPerPage);
-                
                 if (result.success) {
                     setPatients(result.data);
                     setTotalPages(result.pagination.totalPages);
-                    setTotalPatients(result.pagination.totalPatients);
-                    console.log('Pacientes cargados:', result.data.length);
-                    console.log('Total de pacientes:', result.pagination.totalPatients);
-                    console.log('Total de páginas:', result.pagination.totalPages);
-                } else {
-                    console.error('Error al cargar pacientes:', result.error);
                 }
-            } catch (error) {
-                console.error('Error:', error);
-            } finally {
-                setLoading(false);
-            }
+            } catch (error) { console.error(error); } finally { setLoading(false); }
         };
-
         loadPatients();
     }, [user, currentPage, patientsPerPage]);
 
-    const handleLogout = () => {
-        setIsAuthenticated(false);
-        setUser(null);
-        navigate('/login');
-    };
-
-    // Manejar búsqueda (filtrado local de los 10 pacientes actuales)
-    const handleSearch = (e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
-    };
-
-    // Detectar automáticamente si es DNI o nombre
-    const detectSearchType = () => {
-        if (!searchTerm.trim()) return null;
-        return /^\d+$/.test(searchTerm) ? 'dni' : 'name';
-    };
-
-    // FILTRAR PACIENTES LOCALMENTE (de los 10 cargados)
-    const filteredPatients = useMemo(() => {
-        if (!searchTerm.trim()) {
-            return patients;
-        }
-
-        const searchType = detectSearchType();
-        return patients.filter(patient => {
-            if (searchType === 'dni') {
-                return patient.dni.includes(searchTerm);
-            } else {
-                return patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       patient.lastname.toLowerCase().includes(searchTerm.toLowerCase());
-            }
-        });
-    }, [searchTerm, patients]);
-
-    // Abrir detalles del paciente
-    const openPatientDetails = (patient) => {
+    // Handlers Cobros
+    const openPaymentModal = (patient) => {
         setSelectedPatient(patient);
-        setShowPatientDetails(true);
+        setPaymentHistory([{ id: 1, date: '2026-01-01', amount: 500, method: 'Efectivo' }]); // Ejemplo
+        setTotalBudget(1000);
+        setShowPaymentModal(true);
     };
 
-    // Abrir modal de agendar turno
+    const handleAddPayment = (e) => {
+        e.preventDefault();
+        if (!newPayment.amount || newPayment.amount <= 0) return;
+        const transaction = { id: Date.now(), ...newPayment, amount: parseFloat(newPayment.amount) };
+        setPaymentHistory([...paymentHistory, transaction]);
+        setNewPayment({ ...newPayment, amount: '' });
+    };
+
+    const totalPaid = paymentHistory.reduce((acc, curr) => acc + curr.amount, 0);
+    const pendingAmount = totalBudget - totalPaid;
+
+    // Handlers Turnos
     const openAppointmentModal = (patient) => {
         setSelectedPatient(patient);
         setAppointmentFormData({
             name: `${patient.name} ${patient.lastname}`,
-            date: '',
-            time: '',
-            type: '',
-            dni: patient.dni
+            date: '', time: '', type: '', dni: patient.dni
         });
         setShowAppointmentModal(true);
     };
-
     // Cerrar modal de turno
     const handleCloseAppointmentModal = () => {
         setShowAppointmentModal(false);
@@ -210,33 +155,53 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
         fullName: `${patient.name} ${patient.lastname}`
     }));
 
+
     return (
         <div className="app">
-            <NavBar
-                activeNav={activeNav}
-                setActiveNav={setActiveNav}
-                user={user}
-                handleLogout={handleLogout}
-            />
-
+            <NavBar user={user} handleLogout={() => navigate('/login')} activeNav="patients" />
             <main className="main-content">
                 <div className="view-patient-container">
-                    {/* Header */}
                     <div className="header-section">
                         <h1 className="page-title">Gestión de Pacientes</h1>
-                        <p className="page-subtitle">Visualiza y administra la información de tus pacientes</p>
+                        <p className="page-subtitle">Control clínico y de pagos</p>
                     </div>
 
-                    {/* Barra de búsqueda */}
-                    <SearchPatients 
-                        searchTerm={searchTerm}
-                        onSearchChange={handleSearch}
-                    />
+                    <SearchPatients searchTerm={searchTerm} onSearchChange={(e) => setSearchTerm(e.target.value)} />
 
-                    {/* Tabla de pacientes */}
-                    {loading ? (
-                        <div style={{ textAlign: 'center', padding: '40px' }}>
-                            <p>Cargando pacientes...</p>
+                    <div className="patients-table-container">
+                        <div className="table-wrapper">
+                            <table className="patients-table">
+                                <thead>
+                                    <tr>
+                                        <th>Paciente</th>
+                                        <th>DNI</th>
+                                        <th>Edad</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredPatients.map(p => (
+                                        <tr key={p.id}>
+                                            <td>
+                                                <div className="patient-info">
+                                                    <div className="patient-avatar"><UserIcon /></div>
+                                                    <span className="patient-name">{p.name} {p.lastname}</span>
+                                                </div>
+                                            </td>
+                                            <td className="dni-text">{p.dni}</td>
+                                            <td>{calculateAge(p.birthdate)} años</td>
+                                            <td>
+                                                <div className="action-buttons">
+                                                    <button className="action-btn details-btn" title="Ver" onClick={() => { setSelectedPatient(p); setShowPatientDetails(true); }}>👁️</button>
+                                                    <button className="action-btn history-btn" title="Clínica" onClick={() => navigate(`/patient/${p.id}/medical-history`)}>📋</button>
+                                                    <button className="action-btn appointment-btn" title="Turno" onClick={() => openAppointmentModal(p)}>📅</button>
+                                                    <button className="action-btn payment-btn" title="Cobros" onClick={() => openPaymentModal(p)}>$</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     ) : patients.length === 0 ? (
                         <div className="no-results">
@@ -349,172 +314,70 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                             )}
                         </>
                     )}
-
-                    {/* Modal - Detalles del Paciente */}
-                    {showPatientDetails && selectedPatient && (
-                        <div className="modal-overlay" onClick={() => setShowPatientDetails(false)}>
-                            <div className="modal patient-details-modal" onClick={(e) => e.stopPropagation()}>
+                    {/* MODAL COBROS */}
+                    {showPaymentModal && selectedPatient && (
+                        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+                            <div className="modal payment-modal wide" onClick={e => e.stopPropagation()}>
                                 <div className="modal-header">
-                                    <h3 className="modal-title">Detalles del Paciente</h3>
-                                    <button
-                                        onClick={() => setShowPatientDetails(false)}
-                                        className="close-btn"
-                                    >
-                                        <CloseIcon />
-                                    </button>
+                                    <h3 className="modal-title">Control de Cobros - {selectedPatient.name}</h3>
+                                    <button onClick={() => setShowPaymentModal(false)} className="close-btn">✕</button>
                                 </div>
-
                                 <div className="modal-content">
-                                    <div className="patient-profile">
-                                        <div className="profile-avatar">
-                                            <UserIcon />
+                                    <div className="payment-summary-grid">
+                                        <div className="payment-card">
+                                            <span className="payment-label">Presupuesto</span>
+                                            <input type="number" className="inline-edit-input" value={totalBudget} onChange={e => setTotalBudget(Number(e.target.value))} />
                                         </div>
-                                        <div className="profile-info">
-                                            <h4 className="profile-name">{selectedPatient.name} {selectedPatient.lastname}</h4>
-                                            <p className="profile-dni">DNI: {selectedPatient.dni}</p>
+                                        <div className="payment-card paid">
+                                            <span className="payment-label">Abonado</span>
+                                            <span className="payment-value">${totalPaid.toLocaleString()}</span>
+                                        </div>
+                                        <div className={`payment-card pending ${pendingAmount > 0 ? 'debt' : 'settled'}`}>
+                                            <span className="payment-label">Pendiente</span>
+                                            <span className="payment-value">{pendingAmount <= 0 ? '✓ Pagado' : `$${pendingAmount.toLocaleString()}`}</span>
                                         </div>
                                     </div>
-
-                                    <div className="details-grid">
-                                        <div className="detail-item">
-                                            <p className="detail-label">Edad</p>
-                                            <p className="detail-value">{calculateAge(selectedPatient.birthdate) || 'N/A'} años</p>
-                                        </div>
-                                        <div className="detail-item">
-                                            <p className="detail-label">Fecha de Nacimiento</p>
-                                            <p className="detail-value">{formatDate(selectedPatient.birthdate)}</p>
-                                        </div>
-                                        <div className="detail-item full-width">
-                                            <p className="detail-label">Teléfono</p>
-                                            <p className="detail-value">{selectedPatient.tel || 'No especificado'}</p>
-                                        </div>
-                                        <div className="detail-item full-width">
-                                            <p className="detail-label">Email</p>
-                                            <p className="detail-value">{selectedPatient.email || 'No especificado'}</p>
-                                        </div>
-                                        <div className="detail-item full-width">
-                                            <p className="detail-label">Dirección</p>
-                                            <p className="detail-value">{selectedPatient.address || 'No especificada'}</p>
-                                        </div>
-                                        <div className="detail-item">
-                                            <p className="detail-label">Ocupación</p>
-                                            <p className="detail-value">{selectedPatient.occupation || 'No especificada'}</p>
-                                        </div>
-                                        {selectedPatient.affiliate_number && (
-                                            <div className="detail-item">
-                                                <p className="detail-label">Nro. Afiliado</p>
-                                                <p className="detail-value">{selectedPatient.affiliate_number}</p>
+                                    <hr className="divider" />
+                                    <form className="add-payment-form" onSubmit={handleAddPayment}>
+                                        <h4 className="section-subtitle">Nuevo Abono</h4>
+                                        <div className="payment-inputs-row">
+                                            <div className="input-group"><input type="date" value={newPayment.date} onChange={e => setNewPayment({...newPayment, date: e.target.value})} className="form-input" /></div>
+                                            <div className="input-group">
+                                                <select value={newPayment.method} onChange={e => setNewPayment({...newPayment, method: e.target.value})} className="form-input">
+                                                    <option value="Efectivo">Efectivo</option>
+                                                    <option value="Transferencia">Transferencia</option>
+                                                    <option value="Tarjeta">Tarjeta</option>
+                                                </select>
                                             </div>
-                                        )}
-                                    </div>
-
-                                    <div className="modal-footer">
-                                        <button
-                                            onClick={() => setShowPatientDetails(false)}
-                                            className="btn-primary"
-                                        >
-                                            Cerrar
-                                        </button>
+                                            <div className="input-group"><input type="number" placeholder="Monto $" value={newPayment.amount} onChange={e => setNewPayment({...newPayment, amount: e.target.value})} className="form-input" /></div>
+                                            <button type="submit" className="btn-add-payment">Registrar</button>
+                                        </div>
+                                    </form>
+                                    <div className="mini-table-container">
+                                        <table className="mini-table">
+                                            <thead><tr><th>Fecha</th><th>Método</th><th>Monto</th></tr></thead>
+                                            <tbody>
+                                                {paymentHistory.map(h => (
+                                                    <tr key={h.id}><td>{h.date}</td><td><span className={`method-badge ${h.method.toLowerCase()}`}>{h.method}</span></td><td>${h.amount}</td></tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Modal - Agendar Turno */}
-                    {showAppointmentModal && selectedPatient && (
-                        <div className="modal-overlay" onClick={handleCloseAppointmentModal}>
-                            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h2>Agendar Nuevo Turno</h2>
-                                    <button className="modal-close" onClick={handleCloseAppointmentModal}>
-                                        <span>&times;</span>
-                                    </button>
+                    {/* MODAL TURNOS (Simplificado) */}
+                    {showAppointmentModal && (
+                        <div className="modal-overlay" onClick={() => setShowAppointmentModal(false)}>
+                            <div className="modal appointment-modal" onClick={e => e.stopPropagation()}>
+                                <div className="modal-header"><h3>Agendar Turno</h3><button onClick={() => setShowAppointmentModal(false)} className="close-btn">✕</button></div>
+                                <div className="modal-content">
+                                    <p>Paciente: <strong>{appointmentFormData.name}</strong></p>
+                                    <div className="form-group"><label>Fecha</label><input type="date" className="form-input" /></div>
+                                    <div className="modal-footer"><button className="btn-primary" onClick={() => setShowAppointmentModal(false)}>Guardar Turno</button></div>
                                 </div>
-
-                                <form className="appointment-form" onSubmit={handleSubmitAppointment}>
-                                    <div className="form-group">
-                                        <label htmlFor="name">Nombre completo *</label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            name="name"
-                                            value={appointmentFormData.name}
-                                            onChange={handleAppointmentFormChange}
-                                            placeholder="Ej: María González"
-                                            required
-                                            disabled={schedulingAppointment}
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label htmlFor="dni">DNI</label>
-                                        <input
-                                            type="text"
-                                            id="dni"
-                                            name="dni"
-                                            value={appointmentFormData.dni}
-                                            placeholder="Ej: 12345678"
-                                            disabled
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label htmlFor="date">Fecha *</label>
-                                        <input
-                                            type="date"
-                                            id="date"
-                                            name="date"
-                                            value={appointmentFormData.date}
-                                            onChange={handleAppointmentFormChange}
-                                            required
-                                            disabled={schedulingAppointment}
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label htmlFor="time">Hora *</label>
-                                        <input
-                                            type="time"
-                                            id="time"
-                                            name="time"
-                                            value={appointmentFormData.time}
-                                            onChange={handleAppointmentFormChange}
-                                            required
-                                            disabled={schedulingAppointment}
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label htmlFor="type">Tipo de Tratamiento *</label>
-                                        <select
-                                            id="type"
-                                            name="type"
-                                            value={appointmentFormData.type}
-                                            onChange={handleAppointmentFormChange}
-                                            required
-                                            disabled={schedulingAppointment}
-                                        >
-                                            <option value="">Seleccionar tratamiento...</option>
-                                            <option value="Consulta">Consulta</option>
-                                            <option value="Limpieza dental">Limpieza dental</option>
-                                            <option value="Extracción">Extracción</option>
-                                            <option value="Blanqueamiento">Blanqueamiento</option>
-                                            <option value="Ortodoncia">Ortodoncia</option>
-                                            <option value="Implante dental">Implante dental</option>
-                                            <option value="Otro">Otro</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="modal-actions">
-                                        <button type="button" className="btn-outline" onClick={handleCloseAppointmentModal} disabled={schedulingAppointment}>
-                                            Cancelar
-                                        </button>
-                                        <button type="submit" className="btn-primary" disabled={schedulingAppointment}>
-                                            {schedulingAppointment ? 'Agendando...' : 'Agendar Turno'}
-                                        </button>
-                                    </div>
-                                </form>
                             </div>
                         </div>
                     )}
