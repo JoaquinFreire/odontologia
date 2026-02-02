@@ -82,12 +82,82 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
         });
         setShowAppointmentModal(true);
     };
+    // Cerrar modal de turno
+    const handleCloseAppointmentModal = () => {
+        setShowAppointmentModal(false);
+        setSelectedPatient(null);
+        setAppointmentFormData({
+            name: '',
+            date: '',
+            time: '',
+            type: '',
+            dni: ''
+        });
+    };
 
-    const filteredPatients = useMemo(() => {
-        return patients.filter(p => 
-            `${p.name} ${p.lastname}`.toLowerCase().includes(searchTerm.toLowerCase()) || p.dni.includes(searchTerm)
-        );
-    }, [searchTerm, patients]);
+    // Manejar cambios en el formulario de turno
+    const handleAppointmentFormChange = (e) => {
+        const { name, value } = e.target;
+        setAppointmentFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Enviar turno
+    const handleSubmitAppointment = async (e) => {
+        e.preventDefault();
+
+        if (!appointmentFormData.name || !appointmentFormData.date || !appointmentFormData.time || !appointmentFormData.type) {
+            alert('Por favor completa todos los campos obligatorios');
+            return;
+        }
+
+        setSchedulingAppointment(true);
+
+        try {
+            console.log('=== ENVIANDO TURNO ===');
+            console.log('Form data:', appointmentFormData);
+            console.log('User ID:', user.id);
+
+            await appointmentService.createAppointment(appointmentFormData, user.id);
+
+            alert(`✓ Turno agendado para ${appointmentFormData.name} el ${appointmentFormData.date} a las ${appointmentFormData.time}`);
+            handleCloseAppointmentModal();
+        } catch (error) {
+            console.error('Error al crear turno:', error);
+            alert(`✗ Error: ${error.message}`);
+        } finally {
+            setSchedulingAppointment(false);
+        }
+    };
+
+    // Ir a historial clínico
+    const openMedicalHistory = (patient) => {
+        navigate(`/patients/${patient.id}/history`);
+    };
+
+    // Cambiar página
+    const paginate = (pageNumber) => {
+        if (pageNumber >= 1 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+        }
+    };
+
+    // Formatear fecha
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Sin fecha';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-AR');
+    };
+
+    // Crear datos formateados para la tabla
+    const tablePatients = filteredPatients.map(patient => ({
+        ...patient,
+        age: calculateAge(patient.birthdate),
+        fullName: `${patient.name} ${patient.lastname}`
+    }));
+
 
     // Cambiar página
     const paginate = (pageNumber) => {
