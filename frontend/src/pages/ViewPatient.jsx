@@ -26,7 +26,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
     const [showPatientDetails, setShowPatientDetails] = useState(false);
     const [showAppointmentModal, setShowAppointmentModal] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    
+
     // Datos de Cobro
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [paymentHistory, setPaymentHistory] = useState([]);
@@ -87,12 +87,12 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
     };
 
     const filteredPatients = useMemo(() => {
-        return patients.filter(p => 
+        return patients.filter(p =>
             `${p.name} ${p.lastname}`.toLowerCase().includes(searchTerm.toLowerCase()) || p.dni.includes(searchTerm)
         );
     }, [searchTerm, patients]);
 
-     // Ir a historial clínico
+    // Ir a historial clínico
     const openMedicalHistory = (patient) => {
         navigate(`/patients/${patient.id}/history`);
     };
@@ -124,6 +124,7 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                             <tr>
                                                 <th>Paciente</th>
                                                 <th>DNI</th>
+                                                <th>Teléfono</th>
                                                 <th>Edad</th>
                                                 <th>Acciones</th>
                                             </tr>
@@ -138,17 +139,18 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                                         </div>
                                                     </td>
                                                     <td className="dni-text">{p.dni}</td>
+                                                    <td className="phone-text">{p.tel || p.phone || '—'}</td>
                                                     <td>{calculateAge(p.birthdate)} años</td>
                                                     <td>
                                                         <div className="action-buttons">
                                                             <button className="action-btn details-btn" title="Ver" onClick={() => { setSelectedPatient(p); setShowPatientDetails(true); }}>👁️</button>
                                                             <button
-                                                                    className="action-btn history-btn"
-                                                                    title="Historial clínico"
-                                                                    onClick={() => openMedicalHistory(p)}
-                                                                >
-                                                                    📋
-                                                                </button>
+                                                                className="action-btn history-btn"
+                                                                title="Historial clínico"
+                                                                onClick={() => openMedicalHistory(p)}
+                                                            >
+                                                                📋
+                                                            </button>
                                                             <button className="action-btn appointment-btn" title="Turno" onClick={() => openAppointmentModal(p)}>📅</button>
                                                             <button className="action-btn payment-btn" title="Cobros" onClick={() => openPaymentModal(p)}>$</button>
                                                         </div>
@@ -222,15 +224,15 @@ const ViewPatient = ({ setIsAuthenticated, user, setUser }) => {
                                     <form className="add-payment-form" onSubmit={handleAddPayment}>
                                         <h4 className="section-subtitle">Nuevo Abono</h4>
                                         <div className="payment-inputs-row">
-                                            <div className="input-group"><input type="date" value={newPayment.date} onChange={e => setNewPayment({...newPayment, date: e.target.value})} className="form-input" /></div>
+                                            <div className="input-group"><input type="date" value={newPayment.date} onChange={e => setNewPayment({ ...newPayment, date: e.target.value })} className="form-input" /></div>
                                             <div className="input-group">
-                                                <select value={newPayment.method} onChange={e => setNewPayment({...newPayment, method: e.target.value})} className="form-input">
+                                                <select value={newPayment.method} onChange={e => setNewPayment({ ...newPayment, method: e.target.value })} className="form-input">
                                                     <option value="Efectivo">Efectivo</option>
                                                     <option value="Transferencia">Transferencia</option>
                                                     <option value="Tarjeta">Tarjeta</option>
                                                 </select>
                                             </div>
-                                            <div className="input-group"><input type="number" placeholder="Monto $" value={newPayment.amount} onChange={e => setNewPayment({...newPayment, amount: e.target.value})} className="form-input" /></div>
+                                            <div className="input-group"><input type="number" placeholder="Monto $" value={newPayment.amount} onChange={e => setNewPayment({ ...newPayment, amount: e.target.value })} className="form-input" /></div>
                                             <button type="submit" className="btn-add-payment">Registrar</button>
                                         </div>
                                     </form>
